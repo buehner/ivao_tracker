@@ -2,9 +2,9 @@
 CLI interface for ivao_tracker project.
 """
 
-from timeit import default_timer as timer
+from timeit import default_timer as timer # pragma: no cover
 
-from ivao_tracker.base import read_ivao_whazzup
+from ivao_tracker.base import read_ivao_whazzup # pragma: no cover
 
 
 def main():  # pragma: no cover
