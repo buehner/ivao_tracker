@@ -19,7 +19,7 @@ def main():  # pragma: no cover
 
     start = timer()
 
-    print("\nReading IVAO data...")
+    print("Reading IVAO data...")
     snapshot = read_ivao_whazzup()
     nrOfPilots = len(snapshot.clients.pilots)
 
