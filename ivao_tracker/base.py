@@ -12,6 +12,45 @@ If you want to replace this with a Flask application run:
 
 and then choose `flask` as template.
 """
+from typing import List
+from datetime import datetime
+from msgspec import Struct
 
-# example constant variable
-NAME = "ivao_tracker"
+# the IVAO whazzup url
+IVAO_WHAZZUP_URL = "https://api.ivao.aero/v2/tracker/whazzup"
+
+class Pilot(Struct):
+    userId: int
+    callsign: str
+
+class Atc(Struct):
+    userId: int
+    callsign: str
+
+class Clients(Struct):
+    pilots: List[Pilot]
+    atcs: List[Atc]
+
+class Server(Struct):
+    id: str
+    hostname: str
+    ip: str
+    description: str
+    countryId: str
+    currentConnections: int
+    maximumConnections: int
+
+class ConnectionStats(Struct):
+    total: int
+    supervisor: int
+    atc: int
+    observer: int
+    pilot: int
+    worldTour: int
+    followMe: int
+
+class Snapshot(Struct):
+    updatedAt: datetime
+    servers: List[Server]
+    connections: ConnectionStats
+    clients: Clients

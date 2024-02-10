@@ -1,28 +1,27 @@
-"""CLI interface for ivao_tracker project.
-
-Be creative! do whatever you want!
-
-- Install click or typer and create a CLI app
-- Use builtin argparse
-- Start a web application
-- Import things from your .base module
 """
-
+CLI interface for ivao_tracker project.
+"""
+import urllib.request
+from msgspec.json import decode
+from ivao_tracker.base import Snapshot
+from ivao_tracker.base import IVAO_WHAZZUP_URL
+from timeit import default_timer as timer
 
 def main():  # pragma: no cover
     """
     The main function executes on commands:
     `python -m ivao_tracker` and `$ ivao_tracker `.
 
-    This is your program's entry point.
-
-    You can change this function to do whatever you want.
-    Examples:
-        * Run a test suite
-        * Run a server
-        * Do some other stuff
-        * Run a command line application (Click, Typer, ArgParse)
-        * List all available tasks
-        * Run an application (Flask, FastAPI, Django, etc.)
+    This is the program's entry point.
     """
-    print("This will do something")
+
+    print("\nReading IVAO data now")
+    start = timer()
+
+    with urllib.request.urlopen(IVAO_WHAZZUP_URL) as url:
+        data = decode(url.read(), type=Snapshot)
+
+    end = timer()
+    duration = end - start
+
+    print("Got {:d} pilots in {:.2f}s".format(len(data.clients.pilots), duration))
