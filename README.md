@@ -8,7 +8,8 @@
 
 Install requirements (once):
 ```bash
-$ python -m ivao_tracker
+pip install -r requirements.txt
+pip install -r requirements-test.txt
 ```
 
 Run the application:
