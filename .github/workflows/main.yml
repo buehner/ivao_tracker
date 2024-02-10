@@ -10,12 +10,14 @@ on:
       - '**.py'
       - 'Makefile'
       - 'requirements.txt'
+      - '.github/workflows/main.yml'
     branches: [ main ]
   pull_request:
     paths:
       - '**.py'
       - 'Makefile'
       - 'requirements.txt'
+      - '.github/workflows/main.yml'
     branches: [ main ]
 
   # Allows you to run this workflow manually from the Actions tab
