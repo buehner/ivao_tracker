@@ -1,6 +1,7 @@
 """
 CLI interface for ivao_tracker project.
 """
+
 import urllib.request
 from timeit import default_timer as timer
 

@@ -12,6 +12,7 @@ If you want to replace this with a Flask application run:
 
 and then choose `flask` as template.
 """
+
 from datetime import datetime
 from typing import List
 
