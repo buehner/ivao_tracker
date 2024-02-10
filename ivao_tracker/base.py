@@ -13,10 +13,12 @@ If you want to replace this with a Flask application run:
 and then choose `flask` as template.
 """
 
+import urllib.request
 from datetime import datetime
 from typing import List
 
 from msgspec import Struct
+from msgspec.json import decode
 
 # the IVAO whazzup url
 IVAO_WHAZZUP_URL = "https://api.ivao.aero/v2/tracker/whazzup"
@@ -62,3 +64,8 @@ class Snapshot(Struct):
     servers: List[Server]
     connections: ConnectionStats
     clients: Clients
+
+
+def read_ivao_whazzup():
+    with urllib.request.urlopen(IVAO_WHAZZUP_URL) as url:
+        return decode(url.read(), type=Snapshot)
