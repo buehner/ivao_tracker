@@ -2,10 +2,11 @@
 CLI interface for ivao_tracker project.
 """
 import urllib.request
-from msgspec.json import decode
-from ivao_tracker.base import Snapshot
-from ivao_tracker.base import IVAO_WHAZZUP_URL
 from timeit import default_timer as timer
+
+from msgspec.json import decode
+
+from ivao_tracker.base import IVAO_WHAZZUP_URL, Snapshot
 
 
 def main():  # pragma: no cover
@@ -18,17 +19,17 @@ def main():  # pragma: no cover
 
     start = timer()
 
+    print("\nReading IVAO data...")
     snapshot = read_ivao_whazzup()
     nrOfPilots = len(snapshot.clients.pilots)
 
     end = timer()
     duration = end - start
 
-    msgTpl = "Got {:d} pilots in {:.2f}s\n"
+    msgTpl = "Got {:d} pilots in {:.2f}s"
     print(msgTpl.format(nrOfPilots, duration))
 
 
 def read_ivao_whazzup():
-    print("\nReading IVAO data now")
     with urllib.request.urlopen(IVAO_WHAZZUP_URL) as url:
         return decode(url.read(), type=Snapshot)
