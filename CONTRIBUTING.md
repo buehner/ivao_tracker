@@ -68,27 +68,7 @@ Run `git push origin my_contribution`
 On github interface, click on `Pull Request` button.
 
 Wait CI to run and one of the developers will review your PR.
-## Makefile utilities
 
-This project comes with a `Makefile` that contains a number of useful utility.
-
-```bash 
-❯ make
-Usage: make <target>
-
-Targets:
-help:             ## Show the help.
-install:          ## Install the project in dev mode.
-fmt:              ## Format code using black & isort.
-lint:             ## Run pep8, black, mypy linters.
-test: lint        ## Run tests and generate coverage report.
-watch:            ## Run tests on every change.
-clean:            ## Clean unused files.
-virtualenv:       ## Create a virtual environment.
-release:          ## Create a new tag for release.
-docs:             ## Build the documentation.
-switch-to-poetry: ## Switch to poetry package manager.
-init:             ## Initialize the project based on an application template.
 ```
 
 ## Making a new release
@@ -97,7 +77,7 @@ This project uses [semantic versioning](https://semver.org/) and tags releases w
 Every time a new tag is created and pushed to the remote repo, github actions will
 automatically create a new release on github and trigger a release on PyPI.
 
-For this to work you need to setup a secret called `PIPY_API_TOKEN` on the project settings>secrets, 
+For this to work you need to setup a secret called `PIPY_API_TOKEN` on the project settings>secrets,
 this token can be generated on [pypi.org](https://pypi.org/account/).
 
 To trigger a new release all you need to do is.

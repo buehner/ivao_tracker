@@ -1,17 +1,32 @@
-# Welcome to MkDocs
+# Welcome to IVAO tracker
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+[![codecov](https://codecov.io/gh/buehner/ivao_tracker/branch/main/graph/badge.svg?token=ivao_tracker_token_here)](https://codecov.io/gh/buehner/ivao_tracker)
+[![CI](https://github.com/buehner/ivao_tracker/actions/workflows/main.yml/badge.svg)](https://github.com/buehner/ivao_tracker/actions/workflows/main.yml)
 
-## Commands
+This project started as a playground to learn the Python language.
+The git repository has been generated with [this template](https://github.com/rochacbruno/python-project-template).
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+## Usage
 
-## Project layout
+Install requirements (once):
+```bash
+pip install -r requirements.txt
+pip install -r requirements-test.txt
+```
 
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+Run the tests:
+
+```bash
+python -m pytest
+```
+
+Run the code:
+
+```bash
+python -m ivao_tracker
+```
+
+Install the application:
+```bash
+pip install .
+```

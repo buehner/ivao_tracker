@@ -1,5 +1,8 @@
 site_name: IVAO Tracker
 repo_url: https://github.com/buehner/ivao_tracker
+nav:
+- Home: index.md
+- Makefile: makefile.md
 theme:
   name: material
   language: en
@@ -8,22 +11,22 @@ theme:
   font:
     text: Roboto
   features:
-    - content.tooltips
+  - content.tooltips
   palette:
-      # Palette toggle for dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: black
-      accent: indigo
-      toggle:
-        icon: material/weather-night
-        name: Switch to light mode
-        # Palette toggle for light mode
+  # Palette toggle for dark mode
+  - media: "(prefers-color-scheme: dark)"
+    scheme: slate
+    primary: black
+    accent: indigo
+    toggle:
+      icon: material/weather-night
+      name: Switch to light mode
+      # Palette toggle for light mode
+  - media: "(prefers-color-scheme: light)"
 
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: black
-      accent: indigo
-      toggle:
-        icon: material/weather-sunny
-        name: Switch to dark mode
+    scheme: default
+    primary: black
+    accent: indigo
+    toggle:
+      icon: material/weather-sunny
+      name: Switch to dark mode
