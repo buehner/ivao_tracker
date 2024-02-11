@@ -16,6 +16,8 @@ class TestIvaoTracker(unittest.TestCase):
             2024, 2, 10, 22, 5, 0, 607809, tzinfo=datetime.timezone.utc
         )
 
+        self.expected_nr_of_pilots = 2
+
     def test_constants(self):
         assert (
             base.IVAO_WHAZZUP_URL == "https://api.ivao.aero/v2/tracker/whazzup"
@@ -40,3 +42,7 @@ class TestIvaoTracker(unittest.TestCase):
         ) < datetime.timedelta(
             microseconds=1
         ), f"updatedAt is {snapshot.updatedAt}, but expected {self.expected_updatedAt}"
+
+        assert (
+            len(snapshot.clients.pilots) == self.expected_nr_of_pilots
+        ), f"pilot array has length {len(snapshot.clients.pilots)}, but expected is {self.expected_nr_of_pilots}"
