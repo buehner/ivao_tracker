@@ -1,4 +1,5 @@
-site_name: ivao_tracker
+site_name: IVAO Tracker
+repo_url: https://github.com/buehner/ivao_tracker
 theme:
   name: material
   language: en
@@ -21,7 +22,7 @@ theme:
 
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: grey
+      primary: black
       accent: indigo
       toggle:
         icon: material/weather-sunny
