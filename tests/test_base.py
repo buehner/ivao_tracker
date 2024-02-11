@@ -7,27 +7,14 @@ from ivao_tracker import base
 
 class TestIvaoTracker(unittest.TestCase):
 
-    mock_snapshot_json = json.dumps(
-        {
-            "updatedAt": "2024-02-10T22:05:00.607809066Z",
-            "servers": [],
-            "connections": {
-                "total": 812,
-                "supervisor": 14,
-                "atc": 91,
-                "observer": 21,
-                "pilot": 700,
-                "worldTour": 126,
-                "followMe": 0,
-            },
-            "clients": {
-                "pilots": [],
-                "atcs": [],
-                "followMe": [],
-                "observers": [],
-            },
-        }
-    )
+    @classmethod
+    def setUpClass(self):
+        with open("tests/mock_data/snapshot.json", "r") as snapshot_json:
+            self.mock_snapshot_json = json.dumps(json.load(snapshot_json))
+
+        self.expected_updatedAt = datetime.datetime(
+            2024, 2, 10, 22, 5, 0, 607809, tzinfo=datetime.timezone.utc
+        )
 
     def test_constants(self):
         assert (
@@ -46,12 +33,10 @@ class TestIvaoTracker(unittest.TestCase):
         snapshot = base.read_ivao_whazzup()
 
         # make assertions
-        expected_updatedAt = datetime.datetime(
-            2024, 2, 10, 22, 5, 0, 607809, tzinfo=datetime.timezone.utc
-        )
-
         mock_urlopen.assert_called_with(base.IVAO_WHAZZUP_URL)
-        self.assertTrue(
-            abs(expected_updatedAt - snapshot.updatedAt)
-            < datetime.timedelta(microseconds=1)
-        )
+
+        assert abs(
+            self.expected_updatedAt - snapshot.updatedAt
+        ) < datetime.timedelta(
+            microseconds=1
+        ), f"updatedAt is {snapshot.updatedAt}, but expected {self.expected_updatedAt}"
