@@ -1,0 +1,23 @@
+version: '3'
+services:
+  postgis:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: ivao_tracker_postgis
+    ports:
+      - "5555:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - "./postgres_data:/var/lib/postgresql/data:Z"
+    healthcheck:
+      test: pg_isready -U postgres -h localhost -t 5 || exit 1
+      interval: 10s
+      retries: 5
+      timeout: 10s
+
+  ivao_tracker:
+    container_name: ivao_tracker
+    build:
+      context: ./..
+      dockerfile: ./docker/Dockerfile
