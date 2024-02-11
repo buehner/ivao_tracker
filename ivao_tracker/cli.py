@@ -4,7 +4,7 @@ CLI interface for ivao_tracker project.
 
 from timeit import default_timer as timer  # pragma: no cover
 
-from ivao_tracker.base import read_ivao_whazzup  # pragma: no cover
+from ivao_tracker.base import get_ivao_snapshot  # pragma: no cover
 
 
 def main():  # pragma: no cover
@@ -18,7 +18,7 @@ def main():  # pragma: no cover
     start = timer()
 
     print("Reading IVAO data...")
-    snapshot = read_ivao_whazzup()
+    snapshot = get_ivao_snapshot()
     nrOfPilots = len(snapshot.clients.pilots)
 
     msgTpl = "Got {:d} pilots in {:.2f}s"

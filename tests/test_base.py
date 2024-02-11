@@ -24,7 +24,7 @@ class TestIvaoTracker(unittest.TestCase):
         )
 
     @patch.object(base, "urlopen", autospec=True)
-    def test_read_ivao_whazzup(self, mock_urlopen):
+    def test_get_ivao_snapshot(self, mock_urlopen):
 
         # mock the result of urlopen(...).read()
         mock_urlopen.return_value.__enter__.return_value.read.return_value = (
@@ -32,7 +32,7 @@ class TestIvaoTracker(unittest.TestCase):
         )
 
         # call the function to test
-        snapshot = base.read_ivao_whazzup()
+        snapshot = base.get_ivao_snapshot()
 
         # make assertions
         mock_urlopen.assert_called_with(base.IVAO_WHAZZUP_URL)

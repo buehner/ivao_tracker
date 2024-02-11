@@ -56,7 +56,7 @@ class Snapshot(Struct):
     clients: Clients
 
 
-def read_ivao_whazzup():
+def get_ivao_snapshot():
     with urlopen(IVAO_WHAZZUP_URL) as url:
         json_data = url.read()
         snapshot = json.decode(json_data, type=Snapshot)
