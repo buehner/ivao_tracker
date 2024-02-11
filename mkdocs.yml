@@ -1,2 +1,28 @@
 site_name: ivao_tracker
-theme: mkdocs
+theme:
+  name: material
+  language: en
+  icon:
+    logo: material/library-outline
+  font:
+    text: Roboto
+  features:
+    - content.tooltips
+  palette:
+      # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+        # Palette toggle for light mode
+
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: grey
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
