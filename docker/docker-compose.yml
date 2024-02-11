@@ -6,8 +6,8 @@ services:
     ports:
       - "5555:5432"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: ivao
+      POSTGRES_PASSWORD: ivao
     volumes:
       - "./postgres_data:/var/lib/postgresql/data:Z"
     healthcheck:
