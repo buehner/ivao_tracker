@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import List
 
 from msgspec import Struct
-from sqlmodel import SQLModel
 
 
 class JsonPilot(Struct):
