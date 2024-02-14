@@ -17,6 +17,8 @@ class TestIvaoTracker(unittest.TestCase):
         )
 
         self.expected_nr_of_pilots = 2
+        self.expectedAircraftId = "B77W"
+        self.expectedAltitude = 35076
 
     def test_constants(self):
         assert (
@@ -46,3 +48,13 @@ class TestIvaoTracker(unittest.TestCase):
         assert (
             len(snapshot.clients.pilots) == self.expected_nr_of_pilots
         ), f"pilot array has length {len(snapshot.clients.pilots)}, but expected is {self.expected_nr_of_pilots}"
+
+        assert (
+            snapshot.clients.pilots[0].flightPlan.aircraftId
+            == self.expectedAircraftId
+        ), f"aircraftId of flightPlan is {snapshot.clients.pilots[0].flightPlan.aircraftId}, but expected is {self.expectedAircraftId}"
+
+        assert (
+            snapshot.clients.pilots[0].lastTrack.altitude
+            == self.expectedAltitude
+        ), f"altitude of lastTrack is {snapshot.clients.pilots[0].lastTrack.altitude}, but expected is {self.expectedAltitude}"

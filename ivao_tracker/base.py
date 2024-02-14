@@ -15,6 +15,7 @@ from ivao_tracker.model import JsonSnapshot
 # the IVAO whazzup url
 IVAO_WHAZZUP_URL = "https://api.ivao.aero/v2/tracker/whazzup"
 
+
 def get_ivao_snapshot():
     with urlopen(IVAO_WHAZZUP_URL) as url:
         json_data = url.read()
