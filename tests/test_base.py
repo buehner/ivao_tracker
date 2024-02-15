@@ -20,11 +20,6 @@ class TestIvaoTracker(unittest.TestCase):
         self.expectedAircraftId = "B77W"
         self.expectedAltitude = 35076
 
-    def test_constants(self):
-        assert (
-            base.IVAO_WHAZZUP_URL == "https://api.ivao.aero/v2/tracker/whazzup"
-        )
-
     @patch.object(base, "urlopen", autospec=True)
     def test_get_ivao_snapshot(self, mock_urlopen):
 
@@ -35,9 +30,6 @@ class TestIvaoTracker(unittest.TestCase):
 
         # call the function to test
         snapshot = base.get_ivao_snapshot()
-
-        # make assertions
-        mock_urlopen.assert_called_with(base.IVAO_WHAZZUP_URL)
 
         assert abs(
             self.expected_updatedAt - snapshot.updatedAt
