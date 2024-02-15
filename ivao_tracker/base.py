@@ -4,11 +4,9 @@ ivao_tracker base module.
 This is the principal module of the ivao_tracker project.
 """
 
-from datetime import datetime
-from typing import List
 from urllib.request import urlopen
 
-from msgspec import Struct, json
+from msgspec import json
 
 from ivao_tracker.model import JsonSnapshot
 
