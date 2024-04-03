@@ -1,7 +1,7 @@
 version: '3'
 services:
   postgis:
-    image: postgis/postgis:16-3.4-alpine@sha256:ff3cb1040a395f2bc4fd3a288b8bf6f54033957a2728edfb46d67f144a1af687
+    image: postgis/postgis:16-3.4-alpine@sha256:5ed6475595caee4d216c399098d4d8def6c0234298e7491a287539201ca63a4c
     container_name: ivao_tracker_postgis
     ports:
       - "5555:5432"
