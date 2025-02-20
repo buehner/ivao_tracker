@@ -6,7 +6,6 @@ from ivao_tracker import base
 
 
 class TestIvaoTracker(unittest.TestCase):
-
     @classmethod
     def setUpClass(self):
         with open("tests/mock_data/snapshot.json", "r") as snapshot_json:
