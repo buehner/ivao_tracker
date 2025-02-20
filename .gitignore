@@ -133,3 +133,6 @@ dmypy.json
 
 # templates
 .github/templates/*
+
+# Visual Studio Code
+.vscode
