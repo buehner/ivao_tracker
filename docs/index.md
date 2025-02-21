@@ -8,14 +8,19 @@ The git repository has been generated with [this template](https://github.com/ro
 
 ## Requirements
 
-* poetry
-* pg_config (for psycopg2)
+You need poetry.
 
 ## Setup
 
+Install dependencies:
+
 ```bash
-make virtualenv
 make install
+```
+
+Activate the virtual environment:
+```bash
+source $(poetry env info --path)/bin/activate
 ```
 
 ## Usage
