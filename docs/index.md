@@ -6,27 +6,28 @@
 This project started as a playground to learn the Python language.
 The git repository has been generated with [this template](https://github.com/rochacbruno/python-project-template).
 
-## Usage
+## Requirements
 
-Install requirements (once):
+* poetry
+* pg_config (for psycopg2)
+
+## Setup
+
 ```bash
-pip install -r requirements.txt
-pip install -r requirements-test.txt
+make virtualenv
+make install
 ```
+
+## Usage
 
 Run the tests:
 
 ```bash
-python -m pytest
+make test
 ```
 
 Run the code:
 
 ```bash
 python -m ivao_tracker
-```
-
-Install the application:
-```bash
-pip install .
 ```
