@@ -329,14 +329,14 @@ pyflakes = ">=3.2.0,<3.3.0"
 
 [[package]]
 name = "geoalchemy2"
-version = "0.14.4"
+version = "0.17.1"
 description = "Using SQLAlchemy with Spatial Databases"
 optional = false
 python-versions = ">=3.7"
 groups = ["main"]
 files = [
-    {file = "GeoAlchemy2-0.14.4-py3-none-any.whl", hash = "sha256:3adab4d0970710f1d4a55feda5dd2074463261150cb8d1688e3a0d73ef65881e"},
-    {file = "GeoAlchemy2-0.14.4.tar.gz", hash = "sha256:32069594f34473bd60830e341fac1c728b0d094c977e1c44f2b8f418f4f585b8"},
+    {file = "GeoAlchemy2-0.17.1-py3-none-any.whl", hash = "sha256:29f41b67d3a52df47821b695d31dec8600747c6ef4de62ee69811bde481dd2ae"},
+    {file = "geoalchemy2-0.17.1.tar.gz", hash = "sha256:ff5bbe0db5a4ff979f321c8aa1a7556f444ea30cda5146189b1a177ae5bec69d"},
 ]
 
 [package.dependencies]
@@ -1660,4 +1660,4 @@ watchmedo = ["PyYAML (>=3.10)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10"
-content-hash = "36326f80b9b8db951ca0cfd8ee953b69a92071f712f93e30564ad24e7397b504"
+content-hash = "1f4f3c122bb3ce9117020f45272783fb1f6aeba8a1b8e107902e79fad2fb7967"
