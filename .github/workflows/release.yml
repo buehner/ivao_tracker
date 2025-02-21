@@ -16,7 +16,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
@@ -32,7 +32,7 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
     - name: Set up Python
       uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5
       with:
