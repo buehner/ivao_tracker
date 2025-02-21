@@ -9,14 +9,14 @@ on:
     paths:
       - '**.py'
       - 'Makefile'
-      - 'requirements*.txt'
+      - 'pyproject.toml'
       - '.github/workflows/main.yml'
     branches: [ main ]
   pull_request:
     paths:
       - '**.py'
       - 'Makefile'
-      - 'requirements*.txt'
+      - 'pyproject.toml'
       - '.github/workflows/main.yml'
     branches: [ main ]
 
