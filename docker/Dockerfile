@@ -1,4 +1,4 @@
-FROM python:3.12-slim@sha256:86cd49938a9b50c3663aa93cf5db9c8f498d6fe47f463a2cb967248b9e7d69de
+FROM python:3.13-slim@sha256:ae9f9ac89467077ed1efefb6d9042132d28134ba201b2820227d46c9effd3174
 RUN apt-get update && \
     apt-upgrade -y && \
     apt-get install -y libpq-dev gcc
