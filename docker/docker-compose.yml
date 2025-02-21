@@ -1,7 +1,7 @@
 version: '3'
 services:
   postgis:
-    image: postgis/postgis:16-3.4-alpine@sha256:f944464cd93e16018943cb0e0a77c1560341820e9d1e42c512d6575d4ff65c82
+    image: postgis/postgis:16-3.4-alpine@sha256:681931a625df344215e9b8998bf34daf146b6a395ceacee4439eb9c85869239f
     restart: always
     container_name: ivao_tracker_postgis
     command: postgres -c config_file=/etc/postgresql.conf
