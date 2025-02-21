@@ -1,7 +1,7 @@
 # This requirements are for development and testing only, not for production.
 pytest==8.3.4
 coverage==7.4.4
-flake8==7.0.0
+flake8==7.1.2
 black==24.4.0
 isort==5.13.2
 pytest-cov==4.1.0
