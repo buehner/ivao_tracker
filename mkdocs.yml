@@ -12,6 +12,7 @@ theme:
     text: Roboto
   features:
   - content.tooltips
+  - content.code.copy
   palette:
   # Palette toggle for dark mode
   - media: "(prefers-color-scheme: dark)"
