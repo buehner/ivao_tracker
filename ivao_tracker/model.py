@@ -176,7 +176,6 @@ class FlightPlan(SQLModel, table=True):
     aircraftId: str = Field(foreign_key="aircraft.icaoCode")
     aircraft: Aircraft = Relationship(back_populates="flightplans")
     revision: int
-    aircraftId: Optional[str]
     aircraftNumber: int
     departureId: Optional[str]
     arrivalId: Optional[str]

@@ -13,12 +13,12 @@ from urllib.request import urlopen
 from msgspec import json
 from sqlmodel import Session
 
-from ivao_tracker import model
 from ivao_tracker.config_loader import config
 from ivao_tracker.model import JsonSnapshot, Snapshot
 from ivao_tracker.sql import engine
 
 lastSnapshot = datetime.now(timezone.utc)
+
 
 # https://gist.github.com/allanfreitas/e2cd0ff49bbf7ddf1d85a3962d577dbf
 def every(delay, task):
