@@ -17,6 +17,8 @@ on:
       - '**.py'
       - 'Makefile'
       - 'pyproject.toml'
+      - 'docker/docker-compose.yml'
+      - 'docker/Dockerfile'
       - '.github/workflows/main.yml'
     branches: [ main ]
 
