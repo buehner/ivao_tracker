@@ -36,3 +36,5 @@ Run the code:
 ```bash
 python -m ivao_tracker
 ```
+
+docker build -f Dockerfile -t ivao --progress=plain ..

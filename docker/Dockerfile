@@ -1,10 +1,30 @@
 FROM python:3.13-slim@sha256:ae9f9ac89467077ed1efefb6d9042132d28134ba201b2820227d46c9effd3174
+
+SHELL ["/bin/bash", "-c"]
+
+# Set poetry environment variables
+ENV POETRY_HOME="/opt/poetry" \
+    POETRY_VIRTUALENVS_IN_PROJECT=true \
+    POETRY_NO_INTERACTION=1
+
 RUN apt-get update && \
-    apt-upgrade -y && \
-    apt-get install -y libpq-dev gcc
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends curl libpq-dev build-essential postgresql-client && \
+    curl -sSL https://install.python-poetry.org | python3 - && \
+    apt-get remove -y curl && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
-COPY . /app
-WORKDIR /app
+# Add Poetry to PATH
+ENV PATH="$POETRY_HOME/bin:$PATH"
 
-RUN pip install .
+RUN pg_config --version
+
+COPY . /ivao_tracker
+WORKDIR /ivao_tracker
+
+RUN python --version
+RUN poetry --version
+RUN poetry lock
+#RUN source $(poetry env info --path)/bin/activate
+RUN make install
+
 CMD ["ivao_tracker"]

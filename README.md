@@ -6,29 +6,4 @@
 
 ## Full documentation
 
-Just visit https://buehner.github.io/ivao_tracker/
-
-## Usage
-
-Install requirements (once):
-```bash
-pip install -r requirements.txt
-pip install -r requirements-test.txt
-```
-
-Run the tests:
-
-```bash
-python -m pytest
-```
-
-Run the code:
-
-```bash
-python -m ivao_tracker
-```
-
-Install the application:
-```bash
-pip install .
-```
+Visit https://buehner.github.io/ivao_tracker/
