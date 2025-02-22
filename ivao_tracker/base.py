@@ -8,6 +8,7 @@ import threading
 import time
 import traceback
 from datetime import datetime, timedelta, timezone
+from timeit import default_timer as timer  # pragma: no cover
 from urllib.request import urlopen
 
 from msgspec import json
@@ -35,17 +36,23 @@ def every(delay, task):
         next_time += (time.time() - next_time) // delay * delay + delay
 
 
-def get_ivao_snapshot():
+def read_ivao_snapshot():
     whazzup_url = config.config["ivao"]["whazzup_url"]
     with urlopen(whazzup_url) as url:
+        start = timer()
+        print("Starting to read a new Whazzup file...")
         json_data = url.read()
         snapshot = json.decode(json_data, type=JsonSnapshot)
+        end = timer()
+        duration = end - start
+        msgTpl = "Read and parsed json in {:.2f}s"
+        print(msgTpl.format(duration))
         return snapshot
 
 
 def import_ivao_snapshot():
     global lastSnapshot
-    jsonSnapshot = get_ivao_snapshot()
+    jsonSnapshot = read_ivao_snapshot()
 
     snapshotsAreEqual = abs(jsonSnapshot.updatedAt - lastSnapshot) < timedelta(
         microseconds=1

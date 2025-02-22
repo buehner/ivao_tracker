@@ -20,7 +20,7 @@ class TestIvaoTracker(unittest.TestCase):
         self.expectedAltitude = 35076
 
     @patch.object(base, "urlopen", autospec=True)
-    def test_get_ivao_snapshot(self, mock_urlopen):
+    def test_read_ivao_snapshot(self, mock_urlopen):
 
         # mock the result of urlopen(...).read()
         mock_urlopen.return_value.__enter__.return_value.read.return_value = (
@@ -28,7 +28,7 @@ class TestIvaoTracker(unittest.TestCase):
         )
 
         # call the function to test
-        snapshot = base.get_ivao_snapshot()
+        snapshot = base.read_ivao_snapshot()
 
         assert abs(
             self.expected_updatedAt - snapshot.updatedAt
