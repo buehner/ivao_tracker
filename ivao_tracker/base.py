@@ -4,6 +4,7 @@ ivao_tracker base module.
 This is the principal module of the ivao_tracker project.
 """
 
+import logging
 import threading
 import time
 import traceback
@@ -17,6 +18,11 @@ from sqlmodel import Session
 from ivao_tracker.config_loader import config
 from ivao_tracker.model import JsonSnapshot, Snapshot
 from ivao_tracker.sql import engine
+
+from ivao_tracker.logger.config import setup_logging
+
+setup_logging()
+logger = logging.getLogger(__name__)
 
 lastSnapshot = datetime.now(timezone.utc)
 
@@ -40,13 +46,12 @@ def read_ivao_snapshot():
     whazzup_url = config.config["ivao"]["whazzup_url"]
     with urlopen(whazzup_url) as url:
         start = timer()
-        print("Starting to read a new Whazzup file...")
         json_data = url.read()
         snapshot = json.decode(json_data, type=JsonSnapshot)
         end = timer()
         duration = end - start
-        msgTpl = "Read and parsed json in {:.2f}s"
-        print(msgTpl.format(duration))
+        msgTpl = "Parsed whazzup json in {:.2f}s"
+        logger.info(msgTpl.format(duration))
         return snapshot
 
 
@@ -59,9 +64,9 @@ def import_ivao_snapshot():
     )
 
     if snapshotsAreEqual:
-        print("No update available")
+        logger.info("No update available")
     else:
-        print("Creating new snapshot entry in db")
+        logger.debug("Creating new snapshot entry in db")
         stats = jsonSnapshot.connections
 
         snapshot = Snapshot(
@@ -86,4 +91,4 @@ def import_ivao_snapshot():
 def track_snapshots(interval):
     threading.Thread(
         target=lambda: every(interval, import_ivao_snapshot)
-    ).start()  # does not work in docker container
+    ).start()
