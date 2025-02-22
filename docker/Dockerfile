@@ -18,7 +18,14 @@ ENV PATH="$POETRY_HOME/bin:$PATH"
 
 RUN pg_config --version
 
-COPY . /ivao_tracker
+COPY ./README.md /ivao_tracker/README.md
+COPY ./config.toml /ivao_tracker/config.toml
+COPY ./pyproject.toml /ivao_tracker/pyproject.toml
+COPY ./Makefile /ivao_tracker/Makefile
+COPY ./ivao_tracker/ /ivao_tracker/ivao_tracker
+
+RUN rm -Rf /ivao_tracker/ivao_tracker/__pycache__
+
 WORKDIR /ivao_tracker
 
 RUN python --version
