@@ -1,7 +1,7 @@
 import logging
 import tomllib
 
-from ivao_tracker.logger.config import setup_logging
+from ivao_tracker.config.logging import setup_logging
 
 setup_logging()
 logger = logging.getLogger(__name__)

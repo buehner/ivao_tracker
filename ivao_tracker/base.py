@@ -15,9 +15,10 @@ from urllib.request import urlopen
 from msgspec import json
 from sqlmodel import Session
 
-from ivao_tracker.config_loader import config
-from ivao_tracker.logger.config import setup_logging
-from ivao_tracker.model import JsonSnapshot, Snapshot
+from ivao_tracker.config.loader import config
+from ivao_tracker.config.logging import setup_logging
+from ivao_tracker.model.json import JsonSnapshot
+from ivao_tracker.model.sql import Snapshot
 from ivao_tracker.sql import engine
 
 setup_logging()

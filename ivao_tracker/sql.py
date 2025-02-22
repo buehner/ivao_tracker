@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, create_engine
 
-from ivao_tracker.config_loader import config
+from ivao_tracker.config.loader import config
 
 
 def get_db_url():

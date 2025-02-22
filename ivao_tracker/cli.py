@@ -6,8 +6,8 @@ import logging
 from timeit import default_timer as timer  # pragma: no cover
 
 from ivao_tracker.base import track_snapshots
-from ivao_tracker.config_loader import config
-from ivao_tracker.logger.config import setup_logging
+from ivao_tracker.config.loader import config
+from ivao_tracker.config.logging import setup_logging
 from ivao_tracker.sql import create_schema  # pragma: no cover
 
 setup_logging()
