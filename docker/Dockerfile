@@ -4,7 +4,7 @@ SHELL ["/bin/bash", "-c"]
 
 # Set poetry environment variables
 ENV POETRY_HOME="/opt/poetry" \
-    POETRY_VIRTUALENVS_IN_PROJECT=true \
+    POETRY_VIRTUALENVS_CREATE=false \
     POETRY_NO_INTERACTION=1
 
 RUN apt-get update && \
@@ -24,7 +24,6 @@ WORKDIR /ivao_tracker
 RUN python --version
 RUN poetry --version
 RUN poetry lock
-#RUN source $(poetry env info --path)/bin/activate
 RUN make install
 
 CMD ["ivao_tracker"]

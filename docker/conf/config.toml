@@ -1,0 +1,10 @@
+[ivao]
+whazzup_url = "https://api.ivao.aero/v2/tracker/whazzup"
+interval = 30
+
+[db]
+username = "ivao"
+password = "ivao"
+host = "postgis"
+port = 5432
+database = "ivao"
