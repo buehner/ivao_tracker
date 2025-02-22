@@ -1,18 +1,18 @@
 """
 CLI interface for ivao_tracker project.
 """
-import logging
 
+import logging
 from timeit import default_timer as timer  # pragma: no cover
 
 from ivao_tracker.base import track_snapshots
 from ivao_tracker.config_loader import config
-from ivao_tracker.sql import create_schema  # pragma: no cover
-
 from ivao_tracker.logger.config import setup_logging
+from ivao_tracker.sql import create_schema  # pragma: no cover
 
 setup_logging()
 logger = logging.getLogger(__name__)
+
 
 def main():  # pragma: no cover
     """
@@ -30,5 +30,7 @@ def main():  # pragma: no cover
     logger.info("Processed DB in {:.2f}s".format(duration))
 
     interval = config.config["ivao"]["interval"]
-    logger.info("Starting to fetch a snapshot every {:d} seconds".format(interval))
+    logger.info(
+        "Starting to fetch a snapshot every {:d} seconds".format(interval)
+    )
     track_snapshots(interval)

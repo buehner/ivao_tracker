@@ -16,10 +16,9 @@ from msgspec import json
 from sqlmodel import Session
 
 from ivao_tracker.config_loader import config
+from ivao_tracker.logger.config import setup_logging
 from ivao_tracker.model import JsonSnapshot, Snapshot
 from ivao_tracker.sql import engine
-
-from ivao_tracker.logger.config import setup_logging
 
 setup_logging()
 logger = logging.getLogger(__name__)
