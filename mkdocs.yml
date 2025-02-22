@@ -3,6 +3,7 @@ repo_url: https://github.com/buehner/ivao_tracker
 nav:
 - Home: index.md
 - Makefile: makefile.md
+- Docker: docker.md
 theme:
   name: material
   language: en
