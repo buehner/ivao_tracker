@@ -1,6 +1,13 @@
+import logging
+from timeit import default_timer as timer  # pragma: no cover
+
 from sqlmodel import SQLModel, create_engine
 
 from ivao_tracker.config.loader import config
+from ivao_tracker.config.logging import setup_logging
+
+setup_logging()
+logger = logging.getLogger(__name__)
 
 
 def get_db_url():
@@ -21,4 +28,11 @@ engine = create_engine(get_db_url(), echo=False)
 
 def create_schema():
     # time.sleep(2)
+    logger.info("Processing DB schema")
+    start = timer()
+
     SQLModel.metadata.create_all(engine)
+
+    end = timer()
+    duration = end - start
+    logger.info("Processed DB in {:.2f}s".format(duration))

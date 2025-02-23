@@ -3,7 +3,6 @@ CLI interface for ivao_tracker project.
 """
 
 import logging
-from timeit import default_timer as timer  # pragma: no cover
 
 from ivao_tracker.base import track_snapshots
 from ivao_tracker.config.loader import config
@@ -21,13 +20,7 @@ def main():  # pragma: no cover
 
     This is the program's entry point.
     """
-
-    logger.info("Processing DB schema")
-    start = timer()
     create_schema()
-    end = timer()
-    duration = end - start
-    logger.info("Processed DB in {:.2f}s".format(duration))
 
     interval = config.config["ivao"]["interval"]
     logger.info(
