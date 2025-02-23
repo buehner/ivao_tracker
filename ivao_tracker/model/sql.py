@@ -41,10 +41,18 @@ class Aircraft(SQLModel, table=True):
 
 class FlightPlan(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    pilotSessionId: int = Field(foreign_key="pilotsession.id")
-    # pilotSession: "PilotSession" = Relationship(back_populates="flightplan")
-    aircraftId: str = Field(foreign_key="aircraft.icaoCode")
-    aircraft: Aircraft = Relationship(back_populates="flightplans")
+    pilotSession: "PilotSession" = Relationship(
+        back_populates="flightplan", sa_relationship_kwargs={"uselist": False}
+    )
+    pilotSessionId: Optional[int] = Field(
+        default=None, foreign_key="pilotsession.id"
+    )
+    aircraft: Optional["Aircraft"] = Relationship(
+        back_populates="flightplans", sa_relationship_kwargs={"uselist": False}
+    )
+    aircraftIcao: Optional[str] = Field(
+        default=None, foreign_key="aircraft.icaoCode"
+    )
     revision: int
     aircraftNumber: int
     departureId: Optional[str]
@@ -76,8 +84,13 @@ class Atis(SQLModel, table=True):
 
 class PilotSession(UserSessionBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    flightPlanId: int = Field(foreign_key="flightplan.id")
-    # flightplan: FlightPlan = Relationship(back_populates="pilotSession")
+    flightplan: Optional["FlightPlan"] = Relationship(
+        back_populates="pilotSession",
+        sa_relationship_kwargs={
+            "uselist": False,
+            "cascade": "all, delete-orphan",
+        },
+    )
     simulatorId: Optional[str]
     textureId: Optional[int]
     tracks: List["PilotTrack"] = Relationship(back_populates="pilotSession")
