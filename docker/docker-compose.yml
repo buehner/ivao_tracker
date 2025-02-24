@@ -1,7 +1,6 @@
 services:
   postgis:
     image: postgis/postgis:17-3.4-alpine@sha256:5a1dbedac34e0e6663f8b7190d393339571f1cb3ecb2ab2f724524b4f3c7956e
-    restart: always
     container_name: ivao_tracker_postgis
     ports:
       - 5555:5432
@@ -20,7 +19,6 @@ services:
       timeout: 10s
 
   ivao_tracker:
-    restart: always
     container_name: ivao_tracker
     depends_on:
       - postgis
