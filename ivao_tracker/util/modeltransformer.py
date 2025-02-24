@@ -18,12 +18,14 @@ def json2sqlSnapshot(jsonSnapshot):
         pilot=stats.pilot,
         worldTour=stats.worldTour,
         followMe=stats.followMe,
+        pilotSessions=[]
     )
 
     return snapshot
 
 
 def json2sqlPilotSession(jsonPilot):
+    flightplans = []
     if jsonPilot.flightPlan is not None:
         fp = jsonPilot.flightPlan
         if fp.aircraft is not None:
@@ -37,7 +39,7 @@ def json2sqlPilotSession(jsonPilot):
             )
         else:
             aircraft = None
-        flightPlan = FlightPlan(
+        flightplan = FlightPlan(
             id=fp.id,
             pilotSessionId=jsonPilot.id,
             revision=fp.revision,
@@ -62,8 +64,7 @@ def json2sqlPilotSession(jsonPilot):
             aircraftEquipments=fp.aircraftEquipments,
             aircraftTransponderTypes=fp.aircraftTransponderTypes,
         )
-    else:
-        flightPlan = None
+        flightplans.append(flightplan)
 
     pilotSession = PilotSession(
         id=jsonPilot.id,
@@ -77,7 +78,8 @@ def json2sqlPilotSession(jsonPilot):
         time=jsonPilot.time,
         simulatorId=jsonPilot.pilotSession.simulatorId,
         textureId=jsonPilot.pilotSession.textureId,
-        flightplan=flightPlan,
+        flightplans=flightplans,
+        snapshots=[]
     )
 
     return pilotSession

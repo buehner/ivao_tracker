@@ -7,6 +7,15 @@ from sqlmodel import ARRAY, Column, Field, Relationship, SQLModel, String
 # SQL MODELS
 
 
+class SnapshotPilotSessionLink(SQLModel, table=True):
+    snapshotId: Optional[int] = Field(
+        default=None, foreign_key="snapshot.id", primary_key=True
+    )
+    pilotsessionId: Optional[int] = Field(
+        default=None, foreign_key="pilotsession.id", primary_key=True
+    )
+
+
 class Snapshot(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     updatedAt: datetime
@@ -17,6 +26,9 @@ class Snapshot(SQLModel, table=True):
     pilot: int
     worldTour: int
     followMe: int
+    pilotSessions: List["PilotSession"] = Relationship(
+        back_populates="snapshots", link_model=SnapshotPilotSessionLink
+    )
 
 
 class UserSessionBase(SQLModel):
@@ -41,14 +53,14 @@ class Aircraft(SQLModel, table=True):
 
 class FlightPlan(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    pilotSession: "PilotSession" = Relationship(
-        back_populates="flightplan", sa_relationship_kwargs={"uselist": False}
+    pilotSession: Optional["PilotSession"] = Relationship(
+        back_populates="flightplans"
     )
     pilotSessionId: Optional[int] = Field(
         default=None, foreign_key="pilotsession.id"
     )
     aircraft: Optional["Aircraft"] = Relationship(
-        back_populates="flightplans", sa_relationship_kwargs={"uselist": False}
+        back_populates="flightplans"
     )
     aircraftIcao: Optional[str] = Field(
         default=None, foreign_key="aircraft.icaoCode"
@@ -79,27 +91,28 @@ class Atis(SQLModel, table=True):
     lines: List[str] = Field(sa_column=Column(ARRAY(String)))
     revision: str
     timestamp: datetime
-    atcSession: "AtcSession" = Relationship(back_populates="atis")
+    atcSession: "AtcSession" = Relationship(
+        back_populates="atis", sa_relationship_kwargs={"uselist": False}
+    )
+    atcSessionId: int = Field(default=None, foreign_key="atcsession.id")
 
 
 class PilotSession(UserSessionBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    flightplan: Optional["FlightPlan"] = Relationship(
-        back_populates="pilotSession",
-        sa_relationship_kwargs={
-            "uselist": False,
-            "cascade": "all, delete-orphan",
-        },
+    flightplans: List["FlightPlan"] = Relationship(
+        back_populates="pilotSession"
     )
     simulatorId: Optional[str]
     textureId: Optional[int]
     tracks: List["PilotTrack"] = Relationship(back_populates="pilotSession")
+    snapshots: List["Snapshot"] = Relationship(back_populates="pilotSessions", link_model=SnapshotPilotSessionLink)
 
 
 class AtcSession(UserSessionBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    atisId: int = Field(foreign_key="atis.id")
-    atis: Atis = Relationship(back_populates="atcSession")
+    atis: "Atis" = Relationship(
+        back_populates="atcSession", sa_relationship_kwargs={"uselist": False}
+    )
     simulatorId: Optional[str]
     textureId: Optional[int]
     tracks: List["AtcTrack"] = Relationship(back_populates="atcSession")
