@@ -18,11 +18,9 @@ from sqlmodel import Session
 from ivao_tracker.config.loader import config
 from ivao_tracker.config.logging import setup_logging
 from ivao_tracker.model.json import JsonSnapshot
+from ivao_tracker.model.sql import Aircraft, PilotSession
 from ivao_tracker.sql import engine
-from ivao_tracker.util.modeltransformer import (
-    json2sqlPilotSession,
-    json2sqlSnapshot,
-)
+from ivao_tracker.util.model import json2sqlPilotSession, json2sqlSnapshot
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -77,8 +75,36 @@ def import_ivao_snapshot():
         session.add(snapshot)
 
         for jsonPilot in jsonSnapshot.clients.pilots:
-            pilotSession = json2sqlPilotSession(jsonPilot)
-            session.merge(pilotSession)
+            pilotSessionRaw = json2sqlPilotSession(jsonPilot)
+            pilotSession = session.get(PilotSession, jsonPilot.id)
+            if pilotSession is None:
+                pilotSession = pilotSessionRaw
+
+                # use aircrafts from db
+                for fp in pilotSession.flightplans:
+                    if fp.aircraft and fp.aircraft.icaoCode:
+                        ac = session.get(Aircraft,  fp.aircraft.icaoCode)
+                        if ac:
+                            fp.aircraft = ac
+
+                session.add(pilotSession)
+                snapshot.pilotSessions.append(pilotSession)
+                logger.debug("Created new pilot session " + jsonPilot.callsign)
+            else:
+                for fp in pilotSessionRaw.flightplans:
+                    if not any(sessionFp.id == fp.id for sessionFp in pilotSession.flightplans):
+                        if fp.aircraft and fp.aircraft.icaoCode:
+                            ac = session.get(Aircraft, fp.aircraft.icaoCode)
+                            if ac:
+                                fp.aircraft = ac
+                        fp.pilotSession = pilotSession
+                        pilotSession.flightplans.append(fp)
+                        logger.debug("Appended a new flightplan for " + pilotSession.callsign)
+
+                pilotSession.time = pilotSessionRaw.time
+                pilotSession.textureId = pilotSessionRaw.textureId
+                pilotSession.snapshots.append(snapshot)
+                session.merge(pilotSession)
 
         session.commit()
         session.close()

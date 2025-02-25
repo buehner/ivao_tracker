@@ -59,9 +59,7 @@ class FlightPlan(SQLModel, table=True):
     pilotSessionId: Optional[int] = Field(
         default=None, foreign_key="pilotsession.id"
     )
-    aircraft: Optional["Aircraft"] = Relationship(
-        back_populates="flightplans"
-    )
+    aircraft: Optional["Aircraft"] = Relationship(back_populates="flightplans")
     aircraftIcao: Optional[str] = Field(
         default=None, foreign_key="aircraft.icaoCode"
     )
@@ -105,7 +103,9 @@ class PilotSession(UserSessionBase, table=True):
     simulatorId: Optional[str]
     textureId: Optional[int]
     tracks: List["PilotTrack"] = Relationship(back_populates="pilotSession")
-    snapshots: List["Snapshot"] = Relationship(back_populates="pilotSessions", link_model=SnapshotPilotSessionLink)
+    snapshots: List["Snapshot"] = Relationship(
+        back_populates="pilotSessions", link_model=SnapshotPilotSessionLink
+    )
 
 
 class AtcSession(UserSessionBase, table=True):
