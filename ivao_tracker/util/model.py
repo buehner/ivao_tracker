@@ -1,7 +1,13 @@
 import logging
 
 from ivao_tracker.config.logging import setup_logging
-from ivao_tracker.model.sql import Aircraft, FlightPlan, PilotSession, Snapshot
+from ivao_tracker.model.sql import (
+    Aircraft,
+    FlightPlan,
+    PilotSession,
+    PilotTrack,
+    Snapshot,
+)
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -35,6 +41,26 @@ def json2sqlPilotSession(jsonPilot):
         flightplan = createFlightplan(jsonPilot.id, fp, aircraft)
         flightplans.append(flightplan)
 
+    tracks = []
+    if jsonPilot.lastTrack:
+        lt = jsonPilot.lastTrack
+        track = PilotTrack(
+            altitude=lt.altitude,
+            altitudeDifference=lt.altitudeDifference,
+            arrivalDistance=lt.arrivalDistance,
+            departureDistance=lt.departureDistance,
+            groundSpeed=lt.groundSpeed,
+            heading=lt.heading,
+            onGround=lt.onGround,
+            state=lt.state,
+            timestamp=lt.timestamp,
+            transponder=lt.transponder,
+            transponderMode=lt.transponderMode,
+            time=lt.time,
+            geometry=f"SRID=4326;POINT({lt.longitude} {lt.latitude})",
+        )
+        tracks.append(track)
+
     pilotSession = PilotSession(
         id=jsonPilot.id,
         userId=jsonPilot.userId,
@@ -48,6 +74,7 @@ def json2sqlPilotSession(jsonPilot):
         simulatorId=jsonPilot.pilotSession.simulatorId,
         textureId=jsonPilot.pilotSession.textureId,
         flightplans=flightplans,
+        tracks=tracks,
         snapshots=[],
     )
 

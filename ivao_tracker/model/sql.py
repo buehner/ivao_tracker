@@ -121,7 +121,7 @@ class AtcSession(UserSessionBase, table=True):
 class PilotTrack(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     pilotSession: PilotSession = Relationship(back_populates="tracks")
-    pilotSessionId: int = Field(foreign_key="pilotsession.id")
+    pilotSessionId: int = Field(foreign_key="pilotsession.id", index=True)
     # previousTrackId: Optional[int] = Field(
     #     default=None, foreign_key="pilottrack.id"
     # )

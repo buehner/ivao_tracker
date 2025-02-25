@@ -4,6 +4,7 @@ nav:
 - Home: index.md
 - Makefile: makefile.md
 - Docker: docker.md
+- SQL: sql.md
 theme:
   name: material
   language: en

@@ -77,10 +77,12 @@ def import_ivao_snapshot():
         for jsonPilot in jsonSnapshot.clients.pilots:
             pilotSessionRaw = json2sqlPilotSession(jsonPilot)
             pilotSession = session.get(PilotSession, jsonPilot.id)
+
             if pilotSession is None:
+                # no pilotSession in db...
                 pilotSession = pilotSessionRaw
 
-                # use aircrafts from db
+                # handle flightplan
                 for fp in pilotSession.flightplans:
                     if fp.aircraft and fp.aircraft.icaoCode:
                         ac = session.get(Aircraft, fp.aircraft.icaoCode)
@@ -91,7 +93,9 @@ def import_ivao_snapshot():
                 snapshot.pilotSessions.append(pilotSession)
                 logger.debug("Created new pilot session " + jsonPilot.callsign)
             else:
+                # we found an existing pilotSession in db
                 for fp in pilotSessionRaw.flightplans:
+                    # handle flightplans
                     if not any(
                         sessionFp.id == fp.id
                         for sessionFp in pilotSession.flightplans
@@ -106,6 +110,12 @@ def import_ivao_snapshot():
                             "Appended a new flightplan for "
                             + pilotSession.callsign
                         )
+
+                for t in pilotSessionRaw.tracks:
+                    # handle tracks
+                    t.pilotSession = pilotSession
+                    session.add(t)
+                    pilotSession.tracks.append(t)
 
                 pilotSession.time = pilotSessionRaw.time
                 pilotSession.textureId = pilotSessionRaw.textureId
