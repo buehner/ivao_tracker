@@ -83,7 +83,7 @@ def import_ivao_snapshot():
                 # use aircrafts from db
                 for fp in pilotSession.flightplans:
                     if fp.aircraft and fp.aircraft.icaoCode:
-                        ac = session.get(Aircraft,  fp.aircraft.icaoCode)
+                        ac = session.get(Aircraft, fp.aircraft.icaoCode)
                         if ac:
                             fp.aircraft = ac
 
@@ -92,14 +92,20 @@ def import_ivao_snapshot():
                 logger.debug("Created new pilot session " + jsonPilot.callsign)
             else:
                 for fp in pilotSessionRaw.flightplans:
-                    if not any(sessionFp.id == fp.id for sessionFp in pilotSession.flightplans):
+                    if not any(
+                        sessionFp.id == fp.id
+                        for sessionFp in pilotSession.flightplans
+                    ):
                         if fp.aircraft and fp.aircraft.icaoCode:
                             ac = session.get(Aircraft, fp.aircraft.icaoCode)
                             if ac:
                                 fp.aircraft = ac
                         fp.pilotSession = pilotSession
                         pilotSession.flightplans.append(fp)
-                        logger.debug("Appended a new flightplan for " + pilotSession.callsign)
+                        logger.debug(
+                            "Appended a new flightplan for "
+                            + pilotSession.callsign
+                        )
 
                 pilotSession.time = pilotSessionRaw.time
                 pilotSession.textureId = pilotSessionRaw.textureId
