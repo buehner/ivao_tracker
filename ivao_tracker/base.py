@@ -38,7 +38,7 @@ def every(delay, task):
         except Exception:
             traceback.print_exc()
             # in production code you might want to have this instead of course:
-            # logger.exception("Problem while executing repetitive task.")
+            logger.exception("Problem while executing repetitive task.")
             # skip tasks if we are behind schedule:
         next_time += (time.time() - next_time) // delay * delay + delay
 
@@ -52,7 +52,7 @@ def read_ivao_snapshot():
         end = timer()
         duration = end - start
         msgTpl = "Parsed whazzup json in {:.2f}s"
-        logger.info(msgTpl.format(duration))
+        logger.debug(msgTpl.format(duration))
         return snapshot
 
 
