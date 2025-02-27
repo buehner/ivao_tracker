@@ -33,7 +33,7 @@ class Snapshot(SQLModel, table=True):
 
 class UserSessionBase(SQLModel):
     userId: int
-    callsign: str
+    callsign: str = Field(index=True)
     serverId: str
     softwareTypeId: str
     softwareVersion: str
