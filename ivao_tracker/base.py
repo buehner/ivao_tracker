@@ -80,47 +80,14 @@ def import_ivao_snapshot():
 
             if pilotSession is None:
                 # no pilotSession in db...
-                pilotSession = pilotSessionRaw
-
-                # handle flightplan
-                for fp in pilotSession.flightplans:
-                    if fp.aircraft and fp.aircraft.icaoCode:
-                        ac = session.get(Aircraft, fp.aircraft.icaoCode)
-                        if ac:
-                            fp.aircraft = ac
-
-                session.add(pilotSession)
-                snapshot.pilotSessions.append(pilotSession)
-                logger.debug("Created new pilot session " + jsonPilot.callsign)
+                pilotSession = createPilotSession(
+                    session, snapshot, pilotSessionRaw
+                )
             else:
                 # we found an existing pilotSession in db
-                for fp in pilotSessionRaw.flightplans:
-                    # handle flightplans
-                    if not any(
-                        sessionFp.id == fp.id
-                        for sessionFp in pilotSession.flightplans
-                    ):
-                        if fp.aircraft and fp.aircraft.icaoCode:
-                            ac = session.get(Aircraft, fp.aircraft.icaoCode)
-                            if ac:
-                                fp.aircraft = ac
-                        fp.pilotSession = pilotSession
-                        pilotSession.flightplans.append(fp)
-                        logger.debug(
-                            "Appended a new flightplan for "
-                            + pilotSession.callsign
-                        )
-
-                for t in pilotSessionRaw.tracks:
-                    # handle tracks
-                    t.pilotSession = pilotSession
-                    session.add(t)
-                    pilotSession.tracks.append(t)
-
-                pilotSession.time = pilotSessionRaw.time
-                pilotSession.textureId = pilotSessionRaw.textureId
-                pilotSession.snapshots.append(snapshot)
-                session.merge(pilotSession)
+                mergePilotSession(
+                    session, snapshot, pilotSessionRaw, pilotSession
+                )
 
         session.commit()
         session.close()
@@ -131,6 +98,50 @@ def import_ivao_snapshot():
         logger.info(msgTpl.format(duration))
 
         lastSnapshot = jsonSnapshot.updatedAt
+
+
+def createPilotSession(session, snapshot, pilotSessionRaw):
+    pilotSession = pilotSessionRaw
+
+    # handle flightplan
+    for fp in pilotSession.flightplans:
+        if fp.aircraft and fp.aircraft.icaoCode:
+            ac = session.get(Aircraft, fp.aircraft.icaoCode)
+            if ac:
+                fp.aircraft = ac
+
+    session.add(pilotSession)
+    snapshot.pilotSessions.append(pilotSession)
+    logger.debug("Created new pilot session " + pilotSessionRaw.callsign)
+    return pilotSession
+
+
+def mergePilotSession(session, snapshot, pilotSessionRaw, pilotSession):
+    for fp in pilotSessionRaw.flightplans:
+        # handle flightplans
+        if not any(
+            sessionFp.id == fp.id for sessionFp in pilotSession.flightplans
+        ):
+            if fp.aircraft and fp.aircraft.icaoCode:
+                ac = session.get(Aircraft, fp.aircraft.icaoCode)
+                if ac:
+                    fp.aircraft = ac
+            fp.pilotSession = pilotSession
+            pilotSession.flightplans.append(fp)
+            logger.debug(
+                "Appended a new flightplan for " + pilotSession.callsign
+            )
+
+    for t in pilotSessionRaw.tracks:
+        # handle tracks
+        t.pilotSession = pilotSession
+        session.add(t)
+        pilotSession.tracks.append(t)
+
+    pilotSession.time = pilotSessionRaw.time
+    pilotSession.textureId = pilotSessionRaw.textureId
+    pilotSession.snapshots.append(snapshot)
+    session.merge(pilotSession)
 
 
 def track_snapshots(interval):
