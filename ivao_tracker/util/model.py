@@ -46,9 +46,6 @@ def json2sqlPilotSession(jsonPilot):
         lt = jsonPilot.lastTrack
         track = PilotTrack(
             altitude=lt.altitude,
-            altitudeDifference=lt.altitudeDifference,
-            arrivalDistance=lt.arrivalDistance,
-            departureDistance=lt.departureDistance,
             groundSpeed=lt.groundSpeed,
             heading=lt.heading,
             onGround=lt.onGround,
@@ -56,13 +53,13 @@ def json2sqlPilotSession(jsonPilot):
             timestamp=lt.timestamp,
             transponder=lt.transponder,
             transponderMode=lt.transponderMode,
-            time=lt.time,
             geometry=f"SRID=4326;POINT({lt.longitude} {lt.latitude})",
         )
         tracks.append(track)
 
     pilotSession = PilotSession(
         id=jsonPilot.id,
+        isActive=True,
         userId=jsonPilot.userId,
         callsign=jsonPilot.callsign,
         serverId=jsonPilot.serverId,
@@ -70,7 +67,6 @@ def json2sqlPilotSession(jsonPilot):
         softwareVersion=jsonPilot.softwareVersion,
         rating=jsonPilot.rating,
         createdAt=jsonPilot.createdAt,
-        time=jsonPilot.time,
         simulatorId=jsonPilot.pilotSession.simulatorId,
         textureId=jsonPilot.pilotSession.textureId,
         flightplans=flightplans,

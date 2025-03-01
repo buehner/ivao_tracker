@@ -13,7 +13,7 @@ from timeit import default_timer as timer  # pragma: no cover
 from urllib.request import urlopen
 
 from msgspec import json
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from ivao_tracker.config.loader import config
 from ivao_tracker.config.logging import setup_logging
@@ -74,9 +74,17 @@ def import_ivao_snapshot():
         snapshot = json2sqlSnapshot(jsonSnapshot)
         session.add(snapshot)
 
+        lastActiveSessions = session.exec(
+            select(PilotSession).where(PilotSession.isActive == True)
+        ).all()
+
+        logger.debug("Found %d last active sessions", len(lastActiveSessions))
+
         for jsonPilot in jsonSnapshot.clients.pilots:
             pilotSessionRaw = json2sqlPilotSession(jsonPilot)
-            pilotSession = session.get(PilotSession, jsonPilot.id)
+            pilotSession = next(
+                (s for s in lastActiveSessions if s.id == jsonPilot.id), None
+            )
 
             if pilotSession is None:
                 # no pilotSession in db...
@@ -88,6 +96,12 @@ def import_ivao_snapshot():
                 mergePilotSession(
                     session, snapshot, pilotSessionRaw, pilotSession
                 )
+                lastActiveSessions.remove(pilotSession)
+
+        for inactivePilotSession in lastActiveSessions:
+            inactivePilotSession.isActive = False
+            session.merge(inactivePilotSession)
+            logger.debug("Ended session %d", inactivePilotSession.id)
 
         session.commit()
         session.close()
@@ -138,7 +152,6 @@ def mergePilotSession(session, snapshot, pilotSessionRaw, pilotSession):
         session.add(t)
         pilotSession.tracks.append(t)
 
-    pilotSession.time = pilotSessionRaw.time
     pilotSession.textureId = pilotSessionRaw.textureId
     pilotSession.snapshots.append(snapshot)
     session.merge(pilotSession)

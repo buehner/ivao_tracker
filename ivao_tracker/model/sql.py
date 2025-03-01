@@ -32,14 +32,15 @@ class Snapshot(SQLModel, table=True):
 
 
 class UserSessionBase(SQLModel):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    isActive: bool = Field(default=True, nullable=False, index=True)
     userId: int
     callsign: str = Field(index=True)
+    createdAt: datetime
     serverId: str
+    rating: int
     softwareTypeId: str
     softwareVersion: str
-    rating: int
-    createdAt: datetime
-    time: int
 
 
 class Aircraft(SQLModel, table=True):
@@ -96,7 +97,6 @@ class Atis(SQLModel, table=True):
 
 
 class PilotSession(UserSessionBase, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
     flightplans: List["FlightPlan"] = Relationship(
         back_populates="pilotSession"
     )
@@ -109,7 +109,6 @@ class PilotSession(UserSessionBase, table=True):
 
 
 class AtcSession(UserSessionBase, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
     atis: "Atis" = Relationship(
         back_populates="atcSession", sa_relationship_kwargs={"uselist": False}
     )
@@ -135,9 +134,6 @@ class PilotTrack(SQLModel, table=True):
     #     back_populates="previousTrack"
     # )
     altitude: int
-    altitudeDifference: int
-    arrivalDistance: Optional[float]
-    departureDistance: Optional[float]
     groundSpeed: int
     heading: int
     onGround: bool
@@ -145,7 +141,6 @@ class PilotTrack(SQLModel, table=True):
     timestamp: datetime
     transponder: int
     transponderMode: str
-    time: int
     geometry: Any = Field(
         sa_column=Column(Geometry("POINT", srid=4326, spatial_index=True))
     )
