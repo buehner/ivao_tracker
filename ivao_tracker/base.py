@@ -22,6 +22,7 @@ from ivao_tracker.config.logging import setup_logging
 from ivao_tracker.model.json import JsonSnapshot
 from ivao_tracker.model.sql import Aircraft, PilotSession
 from ivao_tracker.sql import engine
+from ivao_tracker.util.constants import State
 from ivao_tracker.util.model import json2sqlPilotSession, json2sqlSnapshot
 
 setup_logging()
@@ -215,30 +216,29 @@ def mergePilotSession(
         newState = newTrack.state
         if lastState and lastState != newState:
             if (
-                lastState == "Boarding"
-                and newState == "Departing"
+                lastState == State.BOARDING
+                and newState == State.DEPARTING
                 and pilotSession.taxiTime is None
             ):
                 pilotSession.taxiTime = newTrack.timestamp
                 logger.debug("%s started to taxi", pilotSession.callsign)
             elif (
-                lastState == "Departing"
-                and newState == "Initial Climb"
+                lastState == State.DEPARTING
+                and newState == State.INITIAL_CLIMB
                 and pilotSession.takeoffTime is None
             ):
                 pilotSession.takeoffTime = newTrack.timestamp
                 logger.debug("%s departed", pilotSession.callsign)
             elif (
-                lastState == "En Route"
-                and newState == "Approach"
-                and pilotSession.approachTime is None
+                lastState == State.EN_ROUTE
+                and newState == State.APPROACH
             ):
                 pilotSession.approachTime = newTrack.timestamp
                 logger.debug("%s is approaching", pilotSession.callsign)
-            elif lastState == "Approach" and newState == "Landed":
+            elif lastState == State.APPROACH and newState == State.LANDED:
                 pilotSession.landingTime = newTrack.timestamp
                 logger.debug("%s landed", pilotSession.callsign)
-            elif lastState == "Landed" and newState == "On Blocks":
+            elif lastState == State.LANDED and newState == State.ON_BLOCKS:
                 pilotSession.onBlocksTime = newTrack.timestamp
                 logger.debug("%s is on blocks", pilotSession.callsign)
 
