@@ -109,7 +109,6 @@ def import_ivao_snapshot():
                         pilotSession = session.get(PilotSession, jsonPilot.id)
                         if pilotSession:
                             pilotSession.isActive = True
-                            # lastActiveSessions.append(pilotSession)
                             revivedSession = True
                             logger.info(
                                 "Revived pilot session %s", pilotSession.id
@@ -134,6 +133,7 @@ def import_ivao_snapshot():
 
                 for inactivePilotSession in lastActiveSessions:
                     inactivePilotSession.isActive = False
+                    inactivePilotSession.disconnectTime = snapshot.updatedAt
                     session.merge(inactivePilotSession)
                     logger.debug("Ended session %d", inactivePilotSession.id)
 

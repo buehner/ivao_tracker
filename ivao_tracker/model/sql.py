@@ -104,6 +104,7 @@ class PilotSession(UserSessionBase, table=True):
     approachTime: Optional[datetime]
     landingTime: Optional[datetime]
     onBlocksTime: Optional[datetime]
+    disconnectTime: Optional[datetime]
     simulatorId: Optional[str]
     textureId: Optional[int]
     tracks: List["PilotTrack"] = Relationship(back_populates="pilotSession")

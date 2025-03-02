@@ -1,6 +1,6 @@
 [ivao]
 whazzup_url = "https://api.ivao.aero/v2/tracker/whazzup"
-interval = 30
+interval = 20
 
 [db]
 username = "ivao"
