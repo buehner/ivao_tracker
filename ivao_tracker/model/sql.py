@@ -123,27 +123,16 @@ class AtcSession(UserSessionBase, table=True):
 
 
 class PilotTrack(SQLModel, table=True):
+    __table_args__ = {"postgresql_partition_by":"RANGE (timestamp)"}
     id: Optional[int] = Field(default=None, primary_key=True)
     pilotSessionId: int = Field(foreign_key="pilotsession.id", index=True)
     pilotSession: PilotSession = Relationship(back_populates="tracks")
-    # previousTrackId: Optional[int] = Field(
-    #     default=None, foreign_key="pilottrack.id"
-    # )
-    # nextTrackId: Optional[int] = Field(
-    #     default=None, foreign_key="pilottrack.id"
-    # )
-    # previousTrack: Optional["PilotTrack"] = Relationship(
-    #     back_populates="nextTrack"
-    # )
-    # nextTrack: Optional["PilotTrack"] = Relationship(
-    #     back_populates="previousTrack"
-    # )
     altitude: int
     groundSpeed: int
     heading: int
     onGround: bool
     state: str
-    timestamp: datetime
+    timestamp: datetime = Field(default=None, primary_key=True)
     transponder: int
     transponderMode: str
     geometry: Any = Field(

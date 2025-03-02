@@ -98,12 +98,14 @@ def import_ivao_snapshot():
                         None,
                     )
 
+                    revivedSession = False
                     if pilotSession is None:
                         # try to revive possible ghost connections
                         pilotSession = session.get(PilotSession, jsonPilot.id)
                         if pilotSession:
                             pilotSession.isActive = True
-                            lastActiveSessions.append(pilotSession)
+                            # lastActiveSessions.append(pilotSession)
+                            revivedSession = True
                             logger.info(
                                 "Revived pilot session %s", pilotSession.id
                             )
@@ -122,7 +124,8 @@ def import_ivao_snapshot():
                             pilotSession,
                             aircrafts,
                         )
-                        lastActiveSessions.remove(pilotSession)
+                        if revivedSession is False:
+                            lastActiveSessions.remove(pilotSession)
 
                 for inactivePilotSession in lastActiveSessions:
                     inactivePilotSession.isActive = False
@@ -227,11 +230,7 @@ def mergePilotSession(
             ):
                 pilotSession.approachTime = newTrack.timestamp
                 logger.debug("%s is approaching", pilotSession.callsign)
-            elif (
-                lastState == "Approach"
-                and newState == "Landed"
-                and pilotSession.landingTime is None
-            ):
+            elif lastState == "Approach" and newState == "Landed":
                 pilotSession.landingTime = newTrack.timestamp
                 logger.debug("%s landed", pilotSession.callsign)
             elif lastState == "Landed" and newState == "On Blocks":
