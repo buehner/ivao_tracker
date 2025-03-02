@@ -216,29 +216,29 @@ def mergePilotSession(
         newState = newTrack.state
         if lastState and lastState != newState:
             if (
-                lastState == State.BOARDING
-                and newState == State.DEPARTING
+                lastState == State.BOARDING.value
+                and newState == State.DEPARTING.value
                 and pilotSession.taxiTime is None
             ):
                 pilotSession.taxiTime = newTrack.timestamp
                 logger.debug("%s started to taxi", pilotSession.callsign)
             elif (
-                lastState == State.DEPARTING
-                and newState == State.INITIAL_CLIMB
+                lastState == State.DEPARTING.value
+                and newState == State.INITIAL_CLIMB.value
                 and pilotSession.takeoffTime is None
             ):
                 pilotSession.takeoffTime = newTrack.timestamp
                 logger.debug("%s departed", pilotSession.callsign)
             elif (
-                lastState == State.EN_ROUTE
-                and newState == State.APPROACH
+                lastState == State.EN_ROUTE.value
+                and newState == State.APPROACH.value
             ):
                 pilotSession.approachTime = newTrack.timestamp
                 logger.debug("%s is approaching", pilotSession.callsign)
-            elif lastState == State.APPROACH and newState == State.LANDED:
+            elif lastState == State.APPROACH.value and newState == State.LANDED.value:
                 pilotSession.landingTime = newTrack.timestamp
                 logger.debug("%s landed", pilotSession.callsign)
-            elif lastState == State.LANDED and newState == State.ON_BLOCKS:
+            elif lastState == State.LANDED.value and newState == State.ON_BLOCKS.value:
                 pilotSession.onBlocksTime = newTrack.timestamp
                 logger.debug("%s is on blocks", pilotSession.callsign)
 
