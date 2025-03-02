@@ -97,12 +97,17 @@ class Atis(SQLModel, table=True):
 
 
 class PilotSession(UserSessionBase, table=True):
-    flightplans: List["FlightPlan"] = Relationship(
-        back_populates="pilotSession"
-    )
+    taxiTime: Optional[datetime]
+    takeoffTime: Optional[datetime]
+    approachTime: Optional[datetime]
+    landingTime: Optional[datetime]
+    onBlocksTime: Optional[datetime]
     simulatorId: Optional[str]
     textureId: Optional[int]
     tracks: List["PilotTrack"] = Relationship(back_populates="pilotSession")
+    flightplans: List["FlightPlan"] = Relationship(
+        back_populates="pilotSession"
+    )
     snapshots: List["Snapshot"] = Relationship(
         back_populates="pilotSessions", link_model=SnapshotPilotSessionLink
     )
@@ -119,8 +124,8 @@ class AtcSession(UserSessionBase, table=True):
 
 class PilotTrack(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    pilotSession: PilotSession = Relationship(back_populates="tracks")
     pilotSessionId: int = Field(foreign_key="pilotsession.id", index=True)
+    pilotSession: PilotSession = Relationship(back_populates="tracks")
     # previousTrackId: Optional[int] = Field(
     #     default=None, foreign_key="pilottrack.id"
     # )

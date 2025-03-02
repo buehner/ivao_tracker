@@ -28,11 +28,10 @@ engine = create_engine(get_db_url(), echo=False)
 
 def create_schema():
     # time.sleep(2)
-    logger.info("Processing DB schema")
     start = timer()
 
     SQLModel.metadata.create_all(engine)
 
     end = timer()
     duration = end - start
-    logger.info("Processed DB in {:.2f}s".format(duration))
+    logger.info("Processed DB Schema in {:.2f}s".format(duration))

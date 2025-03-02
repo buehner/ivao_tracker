@@ -13,6 +13,7 @@ from timeit import default_timer as timer  # pragma: no cover
 from urllib.request import urlopen
 
 from msgspec import json
+from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Session, select
 
 from ivao_tracker.config.loader import config
@@ -69,60 +70,96 @@ def import_ivao_snapshot():
     else:
         logger.debug("Importing new snapshot")
         start = timer()
-        session = Session(engine)
 
-        snapshot = json2sqlSnapshot(jsonSnapshot)
-        session.add(snapshot)
+        try:
+            session = Session(engine)
+            with session.no_autoflush:
+                snapshot = json2sqlSnapshot(jsonSnapshot)
+                session.add(snapshot)
 
-        lastActiveSessions = session.exec(
-            select(PilotSession).where(PilotSession.isActive == True)
-        ).all()
+                lastActiveSessions = session.exec(
+                    select(PilotSession).where(PilotSession.isActive == True)
+                ).all()
 
-        logger.debug("Found %d last active sessions", len(lastActiveSessions))
+                aircrafts = session.exec(select(Aircraft)).all()
 
-        for jsonPilot in jsonSnapshot.clients.pilots:
-            pilotSessionRaw = json2sqlPilotSession(jsonPilot)
-            pilotSession = next(
-                (s for s in lastActiveSessions if s.id == jsonPilot.id), None
-            )
-
-            if pilotSession is None:
-                # no pilotSession in db...
-                pilotSession = createPilotSession(
-                    session, snapshot, pilotSessionRaw
+                logger.debug(
+                    "Found %d last active sessions", len(lastActiveSessions)
                 )
-            else:
-                # we found an existing pilotSession in db
-                mergePilotSession(
-                    session, snapshot, pilotSessionRaw, pilotSession
-                )
-                lastActiveSessions.remove(pilotSession)
 
-        for inactivePilotSession in lastActiveSessions:
-            inactivePilotSession.isActive = False
-            session.merge(inactivePilotSession)
-            logger.debug("Ended session %d", inactivePilotSession.id)
+                for jsonPilot in jsonSnapshot.clients.pilots:
+                    pilotSessionRaw = json2sqlPilotSession(jsonPilot)
+                    pilotSession = next(
+                        (
+                            s
+                            for s in lastActiveSessions
+                            if s.id == jsonPilot.id
+                        ),
+                        None,
+                    )
 
-        session.commit()
-        session.close()
+                    if pilotSession is None:
+                        # try to revive possible ghost connections
+                        pilotSession = session.get(PilotSession, jsonPilot.id)
+                        if pilotSession:
+                            pilotSession.isActive = True
+                            lastActiveSessions.append(pilotSession)
+                            logger.info(
+                                "Revived pilot session %s", pilotSession.id
+                            )
 
-        end = timer()
-        duration = end - start
-        msgTpl = "Updated DB in {:.2f}s"
-        logger.info(msgTpl.format(duration))
+                    if pilotSession is None:
+                        # no pilotSession in db...
+                        pilotSession = createPilotSession(
+                            session, snapshot, pilotSessionRaw, aircrafts
+                        )
+                    else:
+                        # we found an existing pilotSession in db
+                        mergePilotSession(
+                            session,
+                            snapshot,
+                            pilotSessionRaw,
+                            pilotSession,
+                            aircrafts,
+                        )
+                        lastActiveSessions.remove(pilotSession)
 
-        lastSnapshot = jsonSnapshot.updatedAt
+                for inactivePilotSession in lastActiveSessions:
+                    inactivePilotSession.isActive = False
+                    session.merge(inactivePilotSession)
+                    logger.debug("Ended session %d", inactivePilotSession.id)
+
+                session.commit()
+                session.close()
+
+                end = timer()
+                duration = end - start
+                msgTpl = "Updated DB in {:.2f}s"
+                logger.info(msgTpl.format(duration))
+
+                lastSnapshot = jsonSnapshot.updatedAt
+        except SQLAlchemyError as e:
+            logger.error("SQL Alchemy Error: %s", str(e))
+            session.rollback()
+
+        except Exception as e:
+            logger.error("Unexpected error: %s", str(e))
 
 
-def createPilotSession(session, snapshot, pilotSessionRaw):
+def createPilotSession(session, snapshot, pilotSessionRaw, aircrafts):
     pilotSession = pilotSessionRaw
 
     # handle flightplan
     for fp in pilotSession.flightplans:
         if fp.aircraft and fp.aircraft.icaoCode:
-            ac = session.get(Aircraft, fp.aircraft.icaoCode)
+            ac = next(
+                (a for a in aircrafts if a.icaoCode == fp.aircraft.icaoCode),
+                None,
+            )
             if ac:
                 fp.aircraft = ac
+            else:
+                aircrafts.append(fp.aircraft)
 
     session.add(pilotSession)
     snapshot.pilotSessions.append(pilotSession)
@@ -130,27 +167,76 @@ def createPilotSession(session, snapshot, pilotSessionRaw):
     return pilotSession
 
 
-def mergePilotSession(session, snapshot, pilotSessionRaw, pilotSession):
+def mergePilotSession(
+    session, snapshot, pilotSessionRaw, pilotSession, aircrafts
+):
     for fp in pilotSessionRaw.flightplans:
         # handle flightplans
         if not any(
             sessionFp.id == fp.id for sessionFp in pilotSession.flightplans
         ):
             if fp.aircraft and fp.aircraft.icaoCode:
-                ac = session.get(Aircraft, fp.aircraft.icaoCode)
+                ac = next(
+                    (
+                        a
+                        for a in aircrafts
+                        if a.icaoCode == fp.aircraft.icaoCode
+                    ),
+                    None,
+                )
                 if ac:
                     fp.aircraft = ac
+                else:
+                    aircrafts.append(fp.aircraft)
             fp.pilotSession = pilotSession
             pilotSession.flightplans.append(fp)
             logger.debug(
                 "Appended a new flightplan for " + pilotSession.callsign
             )
 
-    for t in pilotSessionRaw.tracks:
-        # handle tracks
-        t.pilotSession = pilotSession
-        session.add(t)
-        pilotSession.tracks.append(t)
+    lastState = None
+    if len(pilotSession.tracks) > 0:
+        lastTrack = pilotSession.tracks[-1]
+        lastState = lastTrack.state
+
+    if len(pilotSessionRaw.tracks) > 0:
+        newTrack = pilotSessionRaw.tracks[0]
+        newTrack.pilotSession = pilotSession
+        session.add(newTrack)
+        pilotSession.tracks.append(newTrack)
+        newState = newTrack.state
+        if lastState and lastState != newState:
+            if (
+                lastState == "Boarding"
+                and newState == "Departing"
+                and pilotSession.taxiTime is None
+            ):
+                pilotSession.taxiTime = newTrack.timestamp
+                logger.debug("%s started to taxi", pilotSession.callsign)
+            elif (
+                lastState == "Departing"
+                and newState == "Initial Climb"
+                and pilotSession.takeoffTime is None
+            ):
+                pilotSession.takeoffTime = newTrack.timestamp
+                logger.debug("%s departed", pilotSession.callsign)
+            elif (
+                lastState == "En Route"
+                and newState == "Approach"
+                and pilotSession.approachTime is None
+            ):
+                pilotSession.approachTime = newTrack.timestamp
+                logger.debug("%s is approaching", pilotSession.callsign)
+            elif (
+                lastState == "Approach"
+                and newState == "Landed"
+                and pilotSession.landingTime is None
+            ):
+                pilotSession.landingTime = newTrack.timestamp
+                logger.debug("%s landed", pilotSession.callsign)
+            elif lastState == "Landed" and newState == "On Blocks":
+                pilotSession.onBlocksTime = newTrack.timestamp
+                logger.debug("%s is on blocks", pilotSession.callsign)
 
     pilotSession.textureId = pilotSessionRaw.textureId
     pilotSession.snapshots.append(snapshot)
