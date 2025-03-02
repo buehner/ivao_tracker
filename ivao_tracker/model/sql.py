@@ -2,6 +2,8 @@ from datetime import datetime
 from typing import Any, List, Optional
 
 from geoalchemy2 import Geometry
+from sqlalchemy import Integer
+from sqlalchemy.dialects.postgresql import TIMESTAMP
 from sqlmodel import ARRAY, Column, Field, Relationship, SQLModel, String
 
 # SQL MODELS
@@ -36,11 +38,11 @@ class UserSessionBase(SQLModel):
     isActive: bool = Field(default=True, nullable=False, index=True)
     userId: int
     callsign: str = Field(index=True)
-    createdAt: datetime
     serverId: str
     rating: int
     softwareTypeId: str
     softwareVersion: str
+    createdAt: datetime
 
 
 class Aircraft(SQLModel, table=True):
@@ -123,8 +125,12 @@ class AtcSession(UserSessionBase, table=True):
 
 
 class PilotTrack(SQLModel, table=True):
-    __table_args__ = {"postgresql_partition_by":"RANGE (timestamp)"}
-    id: Optional[int] = Field(default=None, primary_key=True)
+    __table_args__ = {"postgresql_partition_by": "RANGE (timestamp)"}
+    id: int = Field(
+        default=None,
+        sa_column=Column(Integer, primary_key=True, autoincrement=True),
+    )
+    timestamp: datetime = Field(sa_column=Column(TIMESTAMP, primary_key=True))
     pilotSessionId: int = Field(foreign_key="pilotsession.id", index=True)
     pilotSession: PilotSession = Relationship(back_populates="tracks")
     altitude: int
@@ -132,7 +138,6 @@ class PilotTrack(SQLModel, table=True):
     heading: int
     onGround: bool
     state: str
-    timestamp: datetime = Field(default=None, primary_key=True)
     transponder: int
     transponderMode: str
     geometry: Any = Field(
