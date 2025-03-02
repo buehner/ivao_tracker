@@ -13,9 +13,8 @@ from timeit import default_timer as timer  # pragma: no cover
 from urllib.request import urlopen
 
 from msgspec import json
-from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-from sqlmodel import Session, select
+from sqlmodel import Session, select, text
 
 from ivao_tracker.config.loader import config
 from ivao_tracker.config.logging import setup_logging
@@ -84,7 +83,7 @@ def import_ivao_snapshot():
                 session.add(snapshot)
 
                 lastActiveSessions = session.exec(
-                    select(PilotSession).where(PilotSession.isActive == True)
+                    select(PilotSession).where(PilotSession.isActive)
                 ).all()
 
                 aircrafts = session.exec(select(Aircraft)).all()
@@ -235,10 +234,16 @@ def mergePilotSession(
             ):
                 pilotSession.approachTime = newTrack.timestamp
                 logger.debug("%s is approaching", pilotSession.callsign)
-            elif lastState == State.APPROACH.value and newState == State.LANDED.value:
+            elif (
+                lastState == State.APPROACH.value
+                and newState == State.LANDED.value
+            ):
                 pilotSession.landingTime = newTrack.timestamp
                 logger.debug("%s landed", pilotSession.callsign)
-            elif lastState == State.LANDED.value and newState == State.ON_BLOCKS.value:
+            elif (
+                lastState == State.LANDED.value
+                and newState == State.ON_BLOCKS.value
+            ):
                 pilotSession.onBlocksTime = newTrack.timestamp
                 logger.debug("%s is on blocks", pilotSession.callsign)
 
@@ -267,7 +272,7 @@ def pilottrack_partitions_exist(engine, day: datetime) -> bool:
 
     with Session(engine) as session:
         result = session.exec(
-            text(query),
+            text(query),  # type: ignore
             params={
                 "day_partition": f"pilottrack_{day_str}_day",
                 "night_partition": f"pilottrack_{day_str}_night",
@@ -306,6 +311,6 @@ def create_pilottrack_partitions(engine, day: datetime):
             PARTITION OF pilottrack
             FOR VALUES FROM ({start}) TO ({end});
             """
-            session.exec(text(create_stmt))
+            session.exec(text(create_stmt))  # type: ignore
             logger.info("Created partition table %s", table_name)
         session.commit()
