@@ -7,11 +7,13 @@ from geoalchemy2 import Geometry
 from sqlalchemy.dialects.postgresql import TIMESTAMP
 from sqlmodel import (
     ARRAY,
+    CheckConstraint,
     Column,
     Enum,
     Field,
     Integer,
     Relationship,
+    SmallInteger,
     SQLModel,
     String,
 )
@@ -147,8 +149,8 @@ class PilotTrack(SQLModel, table=True):
     pilotSessionId: int = Field(foreign_key="pilotsession.id", index=True)
     pilotSession: PilotSession = Relationship(back_populates="tracks")
     altitude: int
-    groundSpeed: int
-    heading: int
+    groundSpeed: int = Field(sa_column=Column(SmallInteger))
+    heading: int = Field(sa_column=Column(SmallInteger))
     onGround: bool
     state: State = Field(
         sa_column=Column(Enum(State, name="state_enum", create_type=True))
