@@ -15,3 +15,10 @@ class TransponderMode(Enum):
     N = "N"
     S = "S"
     Y = "Y"
+
+
+class WakeTurbulence(Enum):
+    H = "H"
+    J = "J"
+    L = "L"
+    M = "M"

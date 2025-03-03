@@ -7,7 +7,6 @@ from geoalchemy2 import Geometry
 from sqlalchemy.dialects.postgresql import TIMESTAMP
 from sqlmodel import (
     ARRAY,
-    CheckConstraint,
     Column,
     Enum,
     Field,
@@ -18,7 +17,7 @@ from sqlmodel import (
     String,
 )
 
-from ivao_tracker.model.constants import State, TransponderMode
+from ivao_tracker.model.constants import State, TransponderMode, WakeTurbulence
 
 # SQL MODELS
 
@@ -53,7 +52,6 @@ class UserSessionBase(SQLModel):
     userId: int
     callsign: str = Field(index=True)
     serverId: str
-    rating: int
     softwareTypeId: str
     softwareVersion: str
     createdAt: datetime
@@ -62,7 +60,11 @@ class UserSessionBase(SQLModel):
 class Aircraft(SQLModel, table=True):
     icaoCode: Optional[str] = Field(default=None, primary_key=True)
     model: str
-    wakeTurbulence: str
+    wakeTurbulence: WakeTurbulence = Field(
+        sa_column=Column(
+            Enum(WakeTurbulence, name="wake_turbulence_enum", create_type=True)
+        )
+    )
     isMilitary: Optional[bool]
     description: str
     flightplans: List["FlightPlan"] = Relationship(back_populates="aircraft")
@@ -121,6 +123,7 @@ class PilotSession(UserSessionBase, table=True):
     disconnectTime: Optional[datetime]
     simulatorId: Optional[str]
     textureId: Optional[int]
+    rating: int = Field(sa_column=Column(SmallInteger))
     tracks: List["PilotTrack"] = Relationship(back_populates="pilotSession")
     flightplans: List["FlightPlan"] = Relationship(
         back_populates="pilotSession"
@@ -136,6 +139,7 @@ class AtcSession(UserSessionBase, table=True):
     )
     simulatorId: Optional[str]
     textureId: Optional[int]
+    rating: int = Field(sa_column=Column(SmallInteger))
     tracks: List["AtcTrack"] = Relationship(back_populates="atcSession")
 
 

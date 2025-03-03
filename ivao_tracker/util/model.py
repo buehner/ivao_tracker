@@ -1,7 +1,7 @@
 import logging
 
 from ivao_tracker.config.logging import setup_logging
-from ivao_tracker.model.constants import State, TransponderMode
+from ivao_tracker.model.constants import State, TransponderMode, WakeTurbulence
 from ivao_tracker.model.sql import (
     Aircraft,
     FlightPlan,
@@ -83,7 +83,7 @@ def createAircraft(fp):
     aircraft = Aircraft(
         icaoCode=ac.icaoCode,
         model=ac.model,
-        wakeTurbulence=ac.wakeTurbulence,
+        wakeTurbulence=WakeTurbulence(ac.wakeTurbulence),
         isMilitary=ac.isMilitary,
         description=ac.description,
     )
