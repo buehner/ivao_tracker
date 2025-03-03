@@ -2,9 +2,11 @@ from datetime import datetime
 from typing import Any, List, Optional
 
 from geoalchemy2 import Geometry
-from sqlalchemy import Integer
+# from sqlalchemy import Integer
 from sqlalchemy.dialects.postgresql import TIMESTAMP
-from sqlmodel import ARRAY, Column, Field, Relationship, SQLModel, String
+from sqlmodel import ARRAY, Column, Field, Relationship, SQLModel, String, Enum, Integer
+
+from ivao_tracker.model.constants import State
 
 # SQL MODELS
 
@@ -138,7 +140,11 @@ class PilotTrack(SQLModel, table=True):
     groundSpeed: int
     heading: int
     onGround: bool
-    state: str
+    state: State = Field(
+        sa_column=Column(
+            Enum(State, name="state_enum", create_type=True)
+        )
+    )
     transponder: int
     transponderMode: str
     geometry: Any = Field(
