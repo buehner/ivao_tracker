@@ -8,7 +8,7 @@ import logging
 import threading
 import time
 import traceback
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from timeit import default_timer as timer  # pragma: no cover
 from urllib.request import urlopen
 
@@ -27,7 +27,7 @@ from ivao_tracker.util.model import json2sqlPilotSession, json2sqlSnapshot
 setup_logging()
 logger = logging.getLogger(__name__)
 
-lastSnapshot = datetime.now(timezone.utc)
+lastSnapshot = datetime.now(UTC)
 
 
 # https://gist.github.com/allanfreitas/e2cd0ff49bbf7ddf1d85a3962d577dbf
@@ -69,9 +69,12 @@ def import_ivao_snapshot():
     if snapshotsAreEqual:
         logger.info("No update available")
     else:
-        today = datetime.today()
-        if not pilottrack_partitions_exist(engine, today):
-            create_pilottrack_partitions(engine, today)
+        today = datetime.now(UTC)
+        yesterday = today - timedelta(days=1)
+
+        for date in [yesterday, today]:
+            if not pilottrack_partitions_exist(engine, date):
+                create_pilottrack_partitions(engine, date)
 
         logger.debug("Importing new snapshot")
         start = timer()
