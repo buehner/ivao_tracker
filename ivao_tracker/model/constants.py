@@ -9,3 +9,9 @@ class State(Enum):
     APPROACH = "Approach"
     LANDED = "Landed"
     ON_BLOCKS = "On Blocks"
+
+
+class TransponderMode(Enum):
+    N = "N"
+    S = "S"
+    Y = "Y"

@@ -1,7 +1,7 @@
 import logging
 
 from ivao_tracker.config.logging import setup_logging
-from ivao_tracker.model.constants import State
+from ivao_tracker.model.constants import State, TransponderMode
 from ivao_tracker.model.sql import (
     Aircraft,
     FlightPlan,
@@ -53,7 +53,7 @@ def json2sqlPilotSession(jsonPilot):
             state=State(lt.state),
             timestamp=lt.timestamp,
             transponder=lt.transponder,
-            transponderMode=lt.transponderMode,
+            transponderMode=TransponderMode(lt.transponderMode),
             geometry=f"SRID=4326;POINT({lt.longitude} {lt.latitude})",
         )
         tracks.append(track)

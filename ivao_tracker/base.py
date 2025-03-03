@@ -231,22 +231,13 @@ def mergePilotSession(
             ):
                 pilotSession.takeoffTime = newTrack.timestamp
                 logger.debug("%s departed", pilotSession.callsign)
-            elif (
-                lastState == State.EN_ROUTE
-                and newState == State.APPROACH
-            ):
+            elif lastState == State.EN_ROUTE and newState == State.APPROACH:
                 pilotSession.approachTime = newTrack.timestamp
                 logger.debug("%s is approaching", pilotSession.callsign)
-            elif (
-                lastState == State.APPROACH
-                and newState == State.LANDED
-            ):
+            elif lastState == State.APPROACH and newState == State.LANDED:
                 pilotSession.landingTime = newTrack.timestamp
                 logger.debug("%s landed", pilotSession.callsign)
-            elif (
-                lastState == State.LANDED
-                and newState == State.ON_BLOCKS
-            ):
+            elif lastState == State.LANDED and newState == State.ON_BLOCKS:
                 pilotSession.onBlocksTime = newTrack.timestamp
                 logger.debug("%s is on blocks", pilotSession.callsign)
 

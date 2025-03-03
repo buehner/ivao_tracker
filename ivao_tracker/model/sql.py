@@ -2,11 +2,21 @@ from datetime import datetime
 from typing import Any, List, Optional
 
 from geoalchemy2 import Geometry
+
 # from sqlalchemy import Integer
 from sqlalchemy.dialects.postgresql import TIMESTAMP
-from sqlmodel import ARRAY, Column, Field, Relationship, SQLModel, String, Enum, Integer
+from sqlmodel import (
+    ARRAY,
+    Column,
+    Enum,
+    Field,
+    Integer,
+    Relationship,
+    SQLModel,
+    String,
+)
 
-from ivao_tracker.model.constants import State
+from ivao_tracker.model.constants import State, TransponderMode
 
 # SQL MODELS
 
@@ -141,12 +151,16 @@ class PilotTrack(SQLModel, table=True):
     heading: int
     onGround: bool
     state: State = Field(
-        sa_column=Column(
-            Enum(State, name="state_enum", create_type=True)
-        )
+        sa_column=Column(Enum(State, name="state_enum", create_type=True))
     )
     transponder: int
-    transponderMode: str
+    transponderMode: TransponderMode = Field(
+        sa_column=Column(
+            Enum(
+                TransponderMode, name="transponder_mode_enum", create_type=True
+            )
+        )
+    )
     geometry: Any = Field(
         sa_column=Column(Geometry("POINT", srid=4326, spatial_index=True))
     )
