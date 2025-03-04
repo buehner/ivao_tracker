@@ -200,7 +200,7 @@ def mergePilotSession(
                 else:
                     aircrafts.append(fp.aircraft)
             fp.pilotSession = pilotSession
-            pilotSession.flightplans.append(fp)
+            session.add(fp)
             logger.debug(
                 "Appended a new flightplan for " + pilotSession.callsign
             )
@@ -242,7 +242,7 @@ def mergePilotSession(
                 logger.debug("%s is on blocks", pilotSession.callsign)
 
     pilotSession.textureId = pilotSessionRaw.textureId
-    pilotSession.snapshots.append(snapshot)
+    snapshot.pilotSessions.append(pilotSession)
     session.merge(pilotSession)
 
 

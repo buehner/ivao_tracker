@@ -153,7 +153,7 @@ class PilotTrack(SQLModel, table=True):
     pilotSessionId: int = Field(foreign_key="pilotsession.id", index=True)
     pilotSession: PilotSession = Relationship(back_populates="tracks")
     altitude: int
-    groundSpeed: int = Field(sa_column=Column(SmallInteger))
+    groundSpeed: int
     heading: int = Field(sa_column=Column(SmallInteger))
     onGround: bool
     state: State = Field(
