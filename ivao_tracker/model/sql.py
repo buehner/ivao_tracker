@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, List, Optional
 
 from geoalchemy2 import Geometry
@@ -16,35 +16,51 @@ from sqlmodel import (
     SmallInteger,
     SQLModel,
     String,
+    func,
 )
 
-from ivao_tracker.model.constants import State, TransponderMode, WakeTurbulence
+from ivao_tracker.model.constants import (
+    AirportType,
+    Continent,
+    State,
+    TransponderMode,
+    WakeTurbulence,
+)
 
 # SQL MODELS
 
 
 class Airport(SQLModel, table=True):
-    id: Optional[int] = Field(unique=True)
+    id: Optional[int]
     code: str = Field(primary_key=True)
     ident: str = Field(index=True)
     gps_code: str | None = Field(index=True)
-    type: str | None
+    local_code: str | None = Field(index=True)
+    icao_code: str | None
+    iata_code: str | None
+    keywords: str | None = Field(index=True)
     name: str | None
-    elevation_ft: int | None
+    type: AirportType = Field(
+        sa_column=Column(
+            Enum(AirportType, name="airport_type_enum", create_type=True)
+        )
+    )
+    continent: Continent = Field(
+        sa_column=Column(
+            Enum(Continent, name="continent_enum", create_type=True)
+        )
+    )
     continent: str | None
     country_name: str | None
     iso_country: str | None
     region_name: str | None
     iso_region: str | None
     local_region: str | None
+    elevation_ft: int | None = Field(sa_column=Column(SmallInteger))
     municipality: str | None
     scheduled_service: bool | None
-    icao_code: str | None
-    iata_code: str | None
-    local_code: str | None
     home_link: str | None
     wikipedia_link: str | None
-    keywords: str | None
     score: int | None
     last_updated: datetime | None
     geom: str | None = Field(
@@ -59,18 +75,21 @@ class SnapshotPilotSessionLink(SQLModel, table=True):
     pilotsessionId: Optional[int] = Field(
         default=None, foreign_key="pilotsession.id", primary_key=True
     )
+    created_at: Optional[datetime] = Field(
+        sa_column_kwargs={"server_default": func.now()}
+    )
 
 
 class Snapshot(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     updatedAt: datetime
-    total: int
-    supervisor: int
-    atc: int
-    observer: int
-    pilot: int
-    worldTour: int
-    followMe: int
+    total: int = Field(sa_column=Column(SmallInteger))
+    supervisor: int = Field(sa_column=Column(SmallInteger))
+    atc: int = Field(sa_column=Column(SmallInteger))
+    observer: int = Field(sa_column=Column(SmallInteger))
+    pilot: int = Field(sa_column=Column(SmallInteger))
+    worldTour: int = Field(sa_column=Column(SmallInteger))
+    followMe: int = Field(sa_column=Column(SmallInteger))
     pilotSessions: List["PilotSession"] = Relationship(
         back_populates="snapshots", link_model=SnapshotPilotSessionLink
     )

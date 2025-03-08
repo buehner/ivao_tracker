@@ -22,3 +22,53 @@ class WakeTurbulence(Enum):
     J = "J"
     L = "L"
     M = "M"
+
+
+class Continent(Enum):
+    AFRICA = "AF"
+    EUROPE = "EU"
+    ASIA = "AS"
+    NORTH_AMERICA = "NA"
+    SOUTH_AMERICA = "SA"
+    ANTARCTICA = "AN"
+    OCEANIA = "OC"
+
+
+class AirportType(Enum):
+    SMALL_AIRPORT = "small_airport"
+    MEDIUM_AIRPORT = "medium_airport"
+    LARGE_AIRPORT = "large_airport"
+    SEAPLANE_BASE = "seaplane_base"
+    HELIPORT = "heliport"
+    BALLOONPORT = "balloonport"
+    CLOSED = "closed"
+
+
+airport_field_map = {
+    "departureId": "departure",
+    "arrivalId": "arrival",
+    "alternativeId": "alternative",
+    "alternative2Id": "alternative2",
+}
+
+pandas_na_values = [
+    "-1.#IND",
+    "1.#QNAN",
+    "1.#IND",
+    "-1.#QNAN",
+    "#N/A N/A",
+    "#N/A",
+    "N/A",
+    "n/a",
+    # "NA", # excluded because it is a continent code in our csv
+    "<NA>",
+    "#NA",
+    "NULL",
+    "null",
+    "NaN",
+    "-NaN",
+    "nan",
+    "-nan",
+    "None",
+    "",
+]

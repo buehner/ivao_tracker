@@ -5,6 +5,7 @@ This is the principal module of the ivao_tracker project.
 """
 
 import logging
+import re
 import ssl
 import threading
 import time
@@ -21,7 +22,13 @@ from sqlmodel import Session, func, select
 
 from ivao_tracker.config.loader import config
 from ivao_tracker.config.logging import setup_logging
-from ivao_tracker.model.constants import State
+from ivao_tracker.model.constants import (
+    AirportType,
+    Continent,
+    State,
+    airport_field_map,
+    pandas_na_values,
+)
 from ivao_tracker.model.json import JsonSnapshot
 from ivao_tracker.model.sql import Aircraft, Airport, PilotSession
 from ivao_tracker.sql import (
@@ -68,38 +75,14 @@ def read_ivao_snapshot():
 def sync_airports():
     start = timer()
     logger.info("Syncing airports")
-    logger.debug("Starting to download airport csv data")
 
     url = config.config["airports"]["url"]
     with urlopen(url, context=ssl._create_unverified_context()) as response:
         csv_data = response.read().decode("utf-8")
         logger.debug("Downloaded airport csv data")
-    logger.debug("Starting to parse airport csv data")
 
     fullCsv = pandas.read_csv(
-        StringIO(csv_data),
-        keep_default_na=False,
-        na_values=[
-            "-1.#IND",
-            "1.#QNAN",
-            "1.#IND",
-            "-1.#QNAN",
-            "#N/A N/A",
-            "#N/A",
-            "N/A",
-            "n/a",
-            # "NA", # excluded because it is a continent code in our csv
-            "<NA>",
-            "#NA",
-            "NULL",
-            "null",
-            "NaN",
-            "-NaN",
-            "nan",
-            "-nan",
-            "None",
-            "",
-        ],
+        StringIO(csv_data), keep_default_na=False, na_values=pandas_na_values
     )
 
     # convert columns to correct types
@@ -109,9 +92,6 @@ def sync_airports():
     )
 
     fullCsv = fullCsv.where(pandas.notna(fullCsv), None)
-
-    # only airports with 4 letter idents
-    # fullCsv = fullCsv[fullCsv["ident"].str.len() == 4]
 
     logger.debug("Parsed airport csv data")
 
@@ -150,10 +130,10 @@ def sync_airports():
                 id=int(row.id),
                 code=ident,
                 ident=ident,
-                type=row.type,
+                type=AirportType(row.type),
                 name=row.name,
                 elevation_ft=elevation_ft,
-                continent=row.continent,
+                continent=Continent(row.continent),
                 country_name=row.country_name,
                 iso_country=row.iso_country,
                 region_name=row.region_name,
@@ -188,10 +168,10 @@ def sync_airports():
             airport.id = int(row.id)
             # do not update/overwrite "code" attribute
             airport.ident = row.ident
-            airport.type = row.type
+            airport.type = AirportType(row.type)
             airport.name = row.name
             airport.elevation_ft = elevation_ft
-            airport.continent = row.continent
+            airport.continent = Continent(row.continent)
             airport.country_name = row.country_name
             airport.iso_country = row.iso_country
             airport.region_name = row.region_name
@@ -282,7 +262,7 @@ def import_ivao_snapshot():
                         if pilotSession:
                             pilotSession.isActive = True
                             revivedSession = True
-                            logger.info(
+                            logger.debug(
                                 "Revived pilot session %s", pilotSession.id
                             )
 
@@ -355,13 +335,6 @@ def createPilotSession(session, snapshot, pilotSessionRaw, aircrafts):
                 else:
                     aircrafts.append(fp.aircraft)
 
-            airport_field_map = {
-                "departureId": "departure",
-                "arrivalId": "arrival",
-                "alternativeId": "alternative",
-                "alternative2Id": "alternative2",
-            }
-
             for airport_id_field, airport_field in airport_field_map.items():
                 airport_id = getattr(fp, airport_id_field)
                 if airport_id:
@@ -397,13 +370,6 @@ def mergePilotSession(
                     fp.aircraft = ac
                 else:
                     aircrafts.append(fp.aircraft)
-
-            airport_field_map = {
-                "departureId": "departure",
-                "arrivalId": "arrival",
-                "alternativeId": "alternative",
-                "alternative2Id": "alternative2",
-            }
 
             for airport_id_field, airport_field in airport_field_map.items():
                 airport_id = getattr(fp, airport_id_field)
@@ -461,6 +427,7 @@ def mergePilotSession(
 
 
 def create_or_find_and_update_airport(airport_id, session):
+    # try to find existing airport in db by pk "code" attribute
     airport = session.get(Airport, airport_id)
 
     # gps_code will work in most cases
@@ -475,12 +442,29 @@ def create_or_find_and_update_airport(airport_id, session):
                 "Found correct airport value %s in 'gps_code'",
                 airport.gps_code,
             )
+            return airport
+
+    # try local_code next
+    if airport is None:
+        airport = session.exec(
+            select(Airport).where(Airport.local_code == airport_id)
+        ).first()
+
+        if airport:
+            airport.code = airport_id
+            logger.debug(
+                "Found correct airport value %s in 'local_code'",
+                airport.local_code,
+            )
+            return airport
 
     # known special cases
     if airport is None:
         airport_fix_map = {
             "SVPQ": "SVTP",
             "X21": "KX21",
+            "SSUB": "SDLF",
+            "VHHX": "HK-0099",
         }
 
         if airport_id in airport_fix_map:
@@ -493,34 +477,44 @@ def create_or_find_and_update_airport(airport_id, session):
                     wrong_airport_id,
                     airport_id,
                 )
+                return airport
 
-    # if airport is still None, try to find it in keywords
-    if airport is None:
-        airport = session.exec(
-            select(Airport).where(Airport.keywords.like(f"%{airport_id}%"))
-        ).first()
+        # if airport is still None, try to find it in keywords
+        # this is fuzzy and might not work in all cases
+        if airport is None:
+            airports = session.exec(
+                select(Airport).where(Airport.keywords.like(f"%{airport_id}%"))
+            ).all()
 
-        if airport:
-            airport.code = airport_id
-            logger.debug(
-                "Found correct airport value %s in 'keywords'",
-                airport.keywords,
+            for airport in airports:
+                if airport:
+                    if airport_id_is_in_keywords(airport_id, airport.keywords):
+                        airport.code = airport_id
+                        logger.debug(
+                            "Found correct airport value %s in 'keywords'",
+                            airport.keywords,
+                        )
+                        return airport
+
+        # if airport is still None, create a new one
+        if airport is None:
+            airport = Airport(
+                code=airport_id,
+                ident=airport_id,
+                keywords="Created by IVAO Tracker",
+            )
+            session.add(airport)
+            logger.warning(
+                "Could not find airport value for %s. Creating a new one",
+                airport_id,
             )
 
-    # if airport is still None, create a new one
-    if airport is None:
-        airport = Airport(
-            code=airport_id,
-            ident=airport_id,
-            keywords="Created by IVAO Tracker",
-        )
-        session.add(airport)
-        logger.warning(
-            "Could not find airport value for %s. Creating a new one",
-            airport_id,
-        )
-
     return airport
+
+
+def airport_id_is_in_keywords(airport_id: str, keywords: str) -> bool:
+    pattern = rf"(^|\s|[,;]){re.escape(airport_id)}(\s|[,;]|$)"
+    return bool(re.search(pattern, keywords))
 
 
 def track_snapshots(interval):
