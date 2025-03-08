@@ -4,7 +4,12 @@ CLI interface for ivao_tracker project.
 
 import logging
 
-from ivao_tracker.base import import_ivao_snapshot, track_snapshots
+from ivao_tracker.base import (
+    import_ivao_snapshot,
+    scheduled_sync_airports,
+    sync_airports,
+    track_snapshots,
+)
 from ivao_tracker.config.loader import config
 from ivao_tracker.config.logging import setup_logging
 from ivao_tracker.sql import create_schema  # pragma: no cover
@@ -22,11 +27,14 @@ def main():  # pragma: no cover
     """
     create_schema()
 
-    interval = config.config["ivao"]["interval"]
-    logger.info(
-        "Starting to fetch a snapshot every {:d} seconds".format(interval)
-    )
+    airports_interval = config.config["airports"]["interval"]
+    snapshot_interval = config.config["ivao"]["interval"]
+    # sync once
+    sync_airports()
+    # and then scheduled
+    scheduled_sync_airports(airports_interval)
+
     # start the import once
     import_ivao_snapshot()
     # and then scheduled
-    track_snapshots(interval)
+    track_snapshots(snapshot_interval)
