@@ -30,6 +30,7 @@ from ivao_tracker.model.constants import (
 
 class Airport(SQLModel, table=True):
     id: Optional[int]
+    is_fixed: bool = Field(default=False, index=True)
     code: str = Field(primary_key=True)
     ident: str = Field(index=True)
     gps_code: str | None = Field(index=True)

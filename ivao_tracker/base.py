@@ -420,7 +420,9 @@ def mergePilotSession(
                 and new_state == State.INITIAL_CLIMB
                 and pilot_session.takeoffTime is None
             ):
-                pilot_session.takeoffTime = new_track.timestamp
+                pilot_session.takeoffTime = new_track.timestamp - timedelta(
+                    minutes=1
+                )
                 logger.debug("%s departed", pilot_session.callsign)
             elif last_state == State.EN_ROUTE and new_state == State.APPROACH:
                 pilot_session.approachTime = new_track.timestamp
@@ -448,11 +450,19 @@ def create_or_find_and_update_airport(airport_id, session) -> Airport:
         ).first()
 
         if airport:
-            airport.code = airport_id
-            logger.info(
-                "Found correct airport value %s in 'gps_code'",
-                airport.gps_code,
-            )
+            if not airport.is_fixed:
+                airport.code = airport_id
+                airport.is_fixed = True
+                logger.info(
+                    "Found correct airport value %s in 'gps_code'",
+                    airport.gps_code,
+                )
+            else:
+                logger.debug(
+                    "Using previously fixed code %s for %s",
+                    airport.code,
+                    airport_id,
+                )
             return airport
 
     # try local_code next
@@ -462,11 +472,19 @@ def create_or_find_and_update_airport(airport_id, session) -> Airport:
         ).first()
 
         if airport:
-            airport.code = airport_id
-            logger.info(
-                "Found correct airport value %s in 'local_code'",
-                airport.local_code,
-            )
+            if not airport.is_fixed:
+                airport.code = airport_id
+                airport.is_fixed = True
+                logger.info(
+                    "Found correct airport value %s in 'local_code'",
+                    airport.local_code,
+                )
+            else:
+                logger.debug(
+                    "Using previously fixed code %s for %s",
+                    airport.code,
+                    airport_id,
+                )
             return airport
 
     # known special cases
@@ -475,12 +493,20 @@ def create_or_find_and_update_airport(airport_id, session) -> Airport:
             wrong_airport_id = airport_fix_map[airport_id]
             airport = session.get(Airport, wrong_airport_id)
             if airport:
-                airport.code = airport_id
-                logger.info(
-                    "Replacing '%s' with '%s' via custom airport mapping",
-                    wrong_airport_id,
-                    airport_id,
-                )
+                if not airport.is_fixed:
+                    airport.code = airport_id
+                    airport.is_fixed = True
+                    logger.info(
+                        "Replacing '%s' with '%s' via custom airport mapping",
+                        wrong_airport_id,
+                        airport_id,
+                    )
+                else:
+                    logger.debug(
+                        "Using previously fixed code %s for %s",
+                        airport.code,
+                        airport_id,
+                    )
                 return airport
 
         # if airport is still None, try to find it in keywords
@@ -495,19 +521,29 @@ def create_or_find_and_update_airport(airport_id, session) -> Airport:
             for airport in airports:
                 if airport:
                     if airport_id_is_in_keywords(airport_id, airport.keywords):
-                        airport.code = airport_id
-                        logger.info(
-                            "Found correct airport value %s in 'keywords'",
-                            airport.keywords,
-                        )
+                        if not airport.is_fixed:
+                            airport.code = airport_id
+                            airport.is_fixed = True
+                            logger.info(
+                                "Found correct airport value %s in 'keywords'",
+                                airport.keywords,
+                            )
+                        else:
+                            logger.debug(
+                                "Using previously fixed code %s for %s",
+                                airport.code,
+                                airport_id,
+                            )
                         return airport
 
         # if airport is still None, create a new one
         if airport is None:
             airport = Airport(
                 code=airport_id,
+                is_fixed=True,
                 ident=airport_id,
                 keywords="Created by IVAO Tracker",
+                last_updated=datetime.now(UTC),
             )
             session.add(airport)
             logger.warning(

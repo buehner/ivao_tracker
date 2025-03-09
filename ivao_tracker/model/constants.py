@@ -75,8 +75,12 @@ pandas_na_values = [
 
 
 airport_fix_map = {
-    "SVPQ": "SVTP",
     "X21": "KX21",
+    "LKOZ": "CZ-0019",
+    "MMIC": "MM81",
     "SSUB": "SDLF",
+    "SVID": "SVDM",
+    "SVIT": "SVDA",
+    "SVPQ": "SVTP",
     "VHHX": "HK-0099",
 }
