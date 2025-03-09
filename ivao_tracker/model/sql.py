@@ -20,6 +20,7 @@ from sqlmodel import (
 from ivao_tracker.model.constants import (
     AirportType,
     Continent,
+    FixOrigin,
     State,
     TransponderMode,
     WakeTurbulence,
@@ -29,15 +30,7 @@ from ivao_tracker.model.constants import (
 
 
 class Airport(SQLModel, table=True):
-    id: Optional[int]
-    is_fixed: bool = Field(default=False, index=True)
     code: str = Field(primary_key=True)
-    ident: str = Field(index=True)
-    gps_code: str | None = Field(index=True)
-    local_code: str | None = Field(index=True)
-    icao_code: str | None
-    iata_code: str | None
-    keywords: str | None = Field(index=True)
     name: str | None
     type: AirportType = Field(
         sa_column=Column(
@@ -50,17 +43,31 @@ class Airport(SQLModel, table=True):
         )
     )
     country_name: str | None
-    iso_country: str | None
     region_name: str | None
+    municipality: str | None
+    ident: str = Field(index=True)
+    gps_code: str | None = Field(index=True)
+    local_code: str | None = Field(index=True)
+    icao_code: str | None
+    iata_code: str | None
+    keywords: str | None = Field(index=True)
+    iso_country: str | None
     iso_region: str | None
     local_region: str | None
     elevation_ft: int | None = Field(sa_column=Column(SmallInteger))
-    municipality: str | None
     scheduled_service: bool | None
     home_link: str | None
     wikipedia_link: str | None
     score: int | None
     last_updated: datetime | None
+    id: Optional[int]
+    is_fixed: bool = Field(default=False, index=True)
+    fix_origin: FixOrigin = Field(
+        default=FixOrigin.DEFAULT,
+        sa_column=Column(
+            Enum(FixOrigin, name="fix_origin_type_enum", create_type=True)
+        ),
+    )
     geom: str | None = Field(
         sa_column=Column(Geometry("POINT", srid=4326, spatial_index=True))
     )

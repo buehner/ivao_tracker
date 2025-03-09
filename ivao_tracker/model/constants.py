@@ -44,6 +44,15 @@ class State(Enum):
     ON_BLOCKS = "On Blocks"
 
 
+class FixOrigin(Enum):
+    DEFAULT = "default"
+    GPS_CODE = "gps_code"
+    LOCAL_CODE = "local_code"
+    CUSTOM_MAPPING = "custom_mapping"
+    KEYWORDS = "keywords"
+    DUMMY = "dummy"
+
+
 airport_field_map = {
     "departureId": "departure",
     "arrivalId": "arrival",
@@ -75,7 +84,6 @@ pandas_na_values = [
 
 
 airport_fix_map = {
-    "X21": "KX21",
     "LKOZ": "CZ-0019",
     "MMIC": "MM81",
     "SSUB": "SDLF",

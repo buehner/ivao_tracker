@@ -25,6 +25,7 @@ from ivao_tracker.config.logging import setup_logging
 from ivao_tracker.model.constants import (
     AirportType,
     Continent,
+    FixOrigin,
     State,
     airport_field_map,
     airport_fix_map,
@@ -440,7 +441,7 @@ def mergePilotSession(
 
 
 def create_or_find_and_update_airport(airport_id, session) -> Airport:
-    # try to find existing airport in db by pk "code" attribute
+    # try to find existing airport in db by pk attribute "code"
     airport = session.get(Airport, airport_id)
 
     # gps_code will work in most cases
@@ -453,13 +454,14 @@ def create_or_find_and_update_airport(airport_id, session) -> Airport:
             if not airport.is_fixed:
                 airport.code = airport_id
                 airport.is_fixed = True
+                airport.fix_origin = FixOrigin.GPS_CODE
                 logger.info(
-                    "Found correct airport value %s in 'gps_code'",
+                    "Found airport value %s in 'gps_code'",
                     airport.gps_code,
                 )
-            else:
-                logger.debug(
-                    "Using previously fixed code %s for %s",
+            elif airport.code != airport_id:
+                logger.warning(
+                    "Re-using fixed code %s for %s (gps_code)",
                     airport.code,
                     airport_id,
                 )
@@ -475,13 +477,14 @@ def create_or_find_and_update_airport(airport_id, session) -> Airport:
             if not airport.is_fixed:
                 airport.code = airport_id
                 airport.is_fixed = True
+                airport.fix_origin = FixOrigin.LOCAL_CODE
                 logger.info(
-                    "Found correct airport value %s in 'local_code'",
+                    "Found airport value %s in 'local_code'",
                     airport.local_code,
                 )
-            else:
-                logger.debug(
-                    "Using previously fixed code %s for %s",
+            elif airport.code != airport_id:
+                logger.warning(
+                    "Re-using fixed code %s for %s (local_code)",
                     airport.code,
                     airport_id,
                 )
@@ -496,14 +499,15 @@ def create_or_find_and_update_airport(airport_id, session) -> Airport:
                 if not airport.is_fixed:
                     airport.code = airport_id
                     airport.is_fixed = True
+                    airport.fix_origin = FixOrigin.CUSTOM_MAPPING
                     logger.info(
-                        "Replacing '%s' with '%s' via custom airport mapping",
+                        "Found airport value %s in 'custom_mapping'",
                         wrong_airport_id,
                         airport_id,
                     )
-                else:
-                    logger.debug(
-                        "Using previously fixed code %s for %s",
+                elif airport.code != airport_id:
+                    logger.warning(
+                        "Re-using fixed code %s for %s (custom_mapping)",
                         airport.code,
                         airport_id,
                     )
@@ -524,13 +528,14 @@ def create_or_find_and_update_airport(airport_id, session) -> Airport:
                         if not airport.is_fixed:
                             airport.code = airport_id
                             airport.is_fixed = True
+                            airport.fix_origin = FixOrigin.KEYWORDS
                             logger.info(
                                 "Found correct airport value %s in 'keywords'",
                                 airport.keywords,
                             )
-                        else:
-                            logger.debug(
-                                "Using previously fixed code %s for %s",
+                        elif airport.code != airport_id:
+                            logger.warning(
+                                "Re-using fixed code %s for %s (keywords)",
                                 airport.code,
                                 airport_id,
                             )
@@ -541,13 +546,15 @@ def create_or_find_and_update_airport(airport_id, session) -> Airport:
             airport = Airport(
                 code=airport_id,
                 is_fixed=True,
+                fix_origin=FixOrigin.DUMMY,
                 ident=airport_id,
-                keywords="Created by IVAO Tracker",
+                keywords="Dummy created by IVAO Tracker",
                 last_updated=datetime.now(UTC),
             )
             session.add(airport)
             logger.warning(
-                "Could not find airport value for %s. Creating a new one",
+                "Could not find airport value for %s. "
+                "Creating a new dummy airport",
                 airport_id,
             )
 
