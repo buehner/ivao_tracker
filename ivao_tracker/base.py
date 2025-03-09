@@ -111,7 +111,10 @@ def sync_airports():
 
     end = timer()
     duration = end - start
-    msgTpl = "Synced airports in {:.2f}s. Added {:d} new airports and updated {:d} existing airports."
+    msgTpl = (
+        "Synced airports in {:.2f}s. Added {:d} new airports and "
+        "updated {:d} existing airports."
+    )
     logger.info(
         msgTpl.format(duration, len(airports_to_add), len(last_updated_csv))
     )
@@ -484,7 +487,9 @@ def create_or_find_and_update_airport(airport_id, session) -> Airport:
         # this is fuzzy and might not work in all cases
         if airport is None:
             airports = session.exec(
-                select(Airport).where(Airport.keywords.like(f"%{airport_id}%"))
+                select(Airport).where(
+                    Airport.keywords.like(f"%{airport_id}%")  # type: ignore
+                )
             ).all()
 
             for airport in airports:

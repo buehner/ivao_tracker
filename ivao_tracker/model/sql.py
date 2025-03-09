@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import Any, List, Optional
 
 from geoalchemy2 import Geometry
-
 from sqlalchemy.dialects.postgresql import TIMESTAMP
 from sqlalchemy.orm import RelationshipProperty
 from sqlmodel import (
@@ -49,7 +48,6 @@ class Airport(SQLModel, table=True):
             Enum(Continent, name="continent_enum", create_type=True)
         )
     )
-    continent: str | None
     country_name: str | None
     iso_country: str | None
     region_name: str | None
