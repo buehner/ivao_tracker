@@ -27,21 +27,18 @@ from ivao_tracker.model.constants import (
     Continent,
     State,
     airport_field_map,
+    airport_fix_map,
     pandas_na_values,
 )
 from ivao_tracker.model.json import JsonSnapshot
 from ivao_tracker.model.sql import Aircraft, Airport, PilotSession
-from ivao_tracker.sql import (
-    create_pilottrack_partitions,
-    engine,
-    pilottrack_partitions_exist,
-)
-from ivao_tracker.util.model import json2sqlPilotSession, json2sqlSnapshot
+from ivao_tracker.sql import engine, ensure_db_partitions
+from ivao_tracker.util.model import json2sqlPilotSession, json_to_sql_snapshot
 
 setup_logging()
 logger = logging.getLogger(__name__)
 
-lastSnapshot = datetime.now(UTC)
+last_snapshot = datetime.now(UTC)
 
 
 # https://gist.github.com/allanfreitas/e2cd0ff49bbf7ddf1d85a3962d577dbf
@@ -59,7 +56,7 @@ def every(delay, task):
         next_time += (time.time() - next_time) // delay * delay + delay
 
 
-def read_ivao_snapshot():
+def read_ivao_snapshot() -> JsonSnapshot:
     whazzup_url = config.config["ivao"]["whazzup_url"]
     with urlopen(whazzup_url) as url:
         start = timer()
@@ -76,24 +73,7 @@ def sync_airports():
     start = timer()
     logger.info("Syncing airports")
 
-    url = config.config["airports"]["url"]
-    with urlopen(url, context=ssl._create_unverified_context()) as response:
-        csv_data = response.read().decode("utf-8")
-        logger.debug("Downloaded airport csv data")
-
-    fullCsv = pandas.read_csv(
-        StringIO(csv_data), keep_default_na=False, na_values=pandas_na_values
-    )
-
-    # convert columns to correct types
-    fullCsv["scheduled_service"] = fullCsv["scheduled_service"].astype(bool)
-    fullCsv["last_updated"] = pandas.to_datetime(
-        fullCsv["last_updated"], errors="coerce", utc=True
-    )
-
-    fullCsv = fullCsv.where(pandas.notna(fullCsv), None)
-
-    logger.debug("Parsed airport csv data")
+    full_csv = parse_airport_csv()
 
     session = Session(engine)
     with session.no_autoflush:
@@ -104,99 +84,26 @@ def sync_airports():
         ).first()
 
         # get all existing airport idents
-        existingIdents = set(session.exec(select(Airport.ident)).all())
+        existing_idents = set(session.exec(select(Airport.ident)).all())
 
         # filter out airports that are missing in the db
-        newAirportsCsv = fullCsv[~fullCsv["ident"].isin(existingIdents)]
+        new_airports_csv = full_csv[~full_csv["ident"].isin(existing_idents)]
 
         # filter out airports that exist and have been updated
-        lastUpdatedCsv = fullCsv[
-            (fullCsv["ident"].isin(existingIdents))
+        last_updated_csv = full_csv[
+            (full_csv["ident"].isin(existing_idents))
             & (
-                fullCsv["last_updated"]
+                full_csv["last_updated"]
                 > pandas.Timestamp(last_updated_db, tz="UTC")
             )
         ]
 
-        airportsToAdd = []
-        for row in newAirportsCsv.itertuples(index=False):
-            ident = row.ident
-            elevation_ft = row.elevation_ft
-            elevation_ft = (
-                int(elevation_ft) if pandas.notna(elevation_ft) else None
-            )
+        airports_to_add = create_new_airports(new_airports_csv)
 
-            airport = Airport(
-                id=int(row.id),
-                code=ident,
-                ident=ident,
-                type=AirportType(row.type),
-                name=row.name,
-                elevation_ft=elevation_ft,
-                continent=Continent(row.continent),
-                country_name=row.country_name,
-                iso_country=row.iso_country,
-                region_name=row.region_name,
-                iso_region=row.iso_region,
-                local_region=row.local_region,
-                municipality=row.municipality,
-                scheduled_service=bool(row.scheduled_service),
-                gps_code=row.gps_code,
-                icao_code=row.icao_code,
-                iata_code=row.iata_code,
-                local_code=row.local_code,
-                home_link=row.home_link,
-                wikipedia_link=row.wikipedia_link,
-                keywords=row.keywords,
-                score=row.score,
-                last_updated=row.last_updated,
-                geom=f"SRID=4326;POINT({row.longitude_deg} {row.latitude_deg})",
-            )
+        update_airports(last_updated_csv, session)
 
-            airportsToAdd.append(airport)
-            logger.debug("Adding airport %s", ident)
-
-        for row in lastUpdatedCsv.itertuples(index=False):
-            # get existing airport from db
-            airport = session.get(Airport, row.ident)
-            elevation_ft = row.elevation_ft
-            elevation_ft = (
-                int(elevation_ft) if pandas.notna(elevation_ft) else None
-            )
-
-            # update airport
-            airport.id = int(row.id)
-            # do not update/overwrite "code" attribute
-            airport.ident = row.ident
-            airport.type = AirportType(row.type)
-            airport.name = row.name
-            airport.elevation_ft = elevation_ft
-            airport.continent = Continent(row.continent)
-            airport.country_name = row.country_name
-            airport.iso_country = row.iso_country
-            airport.region_name = row.region_name
-            airport.iso_region = row.iso_region
-            airport.local_region = row.local_region
-            airport.municipality = row.municipality
-            airport.scheduled_service = bool(row.scheduled_service)
-            airport.gps_code = row.gps_code
-            airport.icao_code = row.icao_code
-            airport.iata_code = row.iata_code
-            airport.local_code = row.local_code
-            airport.home_link = row.home_link
-            airport.wikipedia_link = row.wikipedia_link
-            airport.keywords = row.keywords
-            airport.score = row.score
-            airport.last_updated = row.last_updated
-            airport.geom = (
-                f"SRID=4326;POINT({row.longitude_deg} {row.latitude_deg})"
-            )
-
-            logger.debug("Updating airport %s", airport.ident)
-            session.merge(airport)
-
-        if len(airportsToAdd) > 0:
-            session.add_all(airportsToAdd)
+        if len(airports_to_add) > 0:
+            session.add_all(airports_to_add)
 
         session.flush()
         session.commit()
@@ -206,20 +113,20 @@ def sync_airports():
     duration = end - start
     msgTpl = "Synced airports in {:.2f}s. Added {:d} new airports and updated {:d} existing airports."
     logger.info(
-        msgTpl.format(duration, len(airportsToAdd), len(lastUpdatedCsv))
+        msgTpl.format(duration, len(airports_to_add), len(last_updated_csv))
     )
 
 
 def import_ivao_snapshot():
-    global lastSnapshot
-    jsonSnapshot = read_ivao_snapshot()
+    global last_snapshot
+    json_snapshot = read_ivao_snapshot()
 
     # check if the snapshot is the same as the last one
-    snapshotsAreEqual = abs(jsonSnapshot.updatedAt - lastSnapshot) < timedelta(
-        microseconds=1
-    )
+    snapshots_are_equal = abs(
+        json_snapshot.updatedAt - last_snapshot
+    ) < timedelta(microseconds=1)
 
-    if snapshotsAreEqual:
+    if snapshots_are_equal:
         logger.info("No update available")
     else:
         ensure_db_partitions()
@@ -230,64 +137,66 @@ def import_ivao_snapshot():
         try:
             session = Session(engine)
             with session.no_autoflush:
-                snapshot = json2sqlSnapshot(jsonSnapshot)
+                snapshot = json_to_sql_snapshot(json_snapshot)
                 session.add(snapshot)
 
-                lastActiveSessions = session.exec(
+                last_active_sessions = session.exec(
                     select(PilotSession).where(PilotSession.isActive)
                 ).all()
 
                 aircrafts = session.exec(select(Aircraft)).all()
 
                 logger.debug(
-                    "Found %d last active sessions", len(lastActiveSessions)
+                    "Found %d last active sessions", len(last_active_sessions)
                 )
 
                 # iterate over all sessions in the snapshot
-                for jsonPilot in jsonSnapshot.clients.pilots:
-                    pilotSessionRaw = json2sqlPilotSession(jsonPilot)
-                    pilotSession = next(
+                for json_pilot in json_snapshot.clients.pilots:
+                    pilot_session_raw = json2sqlPilotSession(json_pilot)
+                    pilot_session = next(
                         (
                             s
-                            for s in lastActiveSessions
-                            if s.id == jsonPilot.id
+                            for s in last_active_sessions
+                            if s.id == json_pilot.id
                         ),
                         None,
                     )
 
-                    revivedSession = False
-                    if pilotSession is None:
+                    revived_session = False
+                    if pilot_session is None:
                         # try to revive possible ghost connections
-                        pilotSession = session.get(PilotSession, jsonPilot.id)
-                        if pilotSession:
-                            pilotSession.isActive = True
-                            revivedSession = True
+                        pilot_session = session.get(
+                            PilotSession, json_pilot.id
+                        )
+                        if pilot_session:
+                            pilot_session.isActive = True
+                            revived_session = True
                             logger.debug(
-                                "Revived pilot session %s", pilotSession.id
+                                "Revived pilot session %s", pilot_session.id
                             )
 
-                    if pilotSession is None:
+                    if pilot_session is None:
                         # no pilotSession in db...
-                        pilotSession = createPilotSession(
-                            session, snapshot, pilotSessionRaw, aircrafts
+                        pilot_session = create_pilot_session(
+                            session, snapshot, pilot_session_raw, aircrafts
                         )
                     else:
                         # we found an existing pilotSession in db
                         mergePilotSession(
                             session,
                             snapshot,
-                            pilotSessionRaw,
-                            pilotSession,
+                            pilot_session_raw,
+                            pilot_session,
                             aircrafts,
                         )
-                        if revivedSession is False:
-                            lastActiveSessions.remove(pilotSession)
+                        if revived_session is False:
+                            last_active_sessions.remove(pilot_session)
 
-                for inactivePilotSession in lastActiveSessions:
-                    inactivePilotSession.isActive = False
-                    inactivePilotSession.disconnectTime = snapshot.updatedAt
-                    session.merge(inactivePilotSession)
-                    logger.debug("Ended session %d", inactivePilotSession.id)
+                for inactive_pilot_session in last_active_sessions:
+                    inactive_pilot_session.isActive = False
+                    inactive_pilot_session.disconnectTime = snapshot.updatedAt
+                    session.merge(inactive_pilot_session)
+                    logger.debug("Ended session %d", inactive_pilot_session.id)
 
                 session.commit()
                 session.close()
@@ -297,7 +206,7 @@ def import_ivao_snapshot():
                 msgTpl = "Updated DB in {:.2f}s"
                 logger.info(msgTpl.format(duration))
 
-                lastSnapshot = jsonSnapshot.updatedAt
+                last_snapshot = json_snapshot.updatedAt
         except SQLAlchemyError as e:
             logger.error("SQL Alchemy Error: %s", str(e))
             session.rollback()
@@ -306,20 +215,119 @@ def import_ivao_snapshot():
             logger.error("Unexpected error: %s", str(e))
 
 
-def ensure_db_partitions():
-    today = datetime.now(UTC)
-    yesterday = today - timedelta(days=1)
+def parse_airport_csv() -> pandas.DataFrame:
+    url = config.config["airports"]["url"]
+    with urlopen(url, context=ssl._create_unverified_context()) as response:
+        csv_data = response.read().decode("utf-8")
+        logger.debug("Downloaded airport csv data")
 
-    for date in [yesterday, today]:
-        if not pilottrack_partitions_exist(engine, date):
-            create_pilottrack_partitions(engine, date)
+    full_csv = pandas.read_csv(
+        StringIO(csv_data), keep_default_na=False, na_values=pandas_na_values
+    )
+
+    # convert columns to correct types
+    full_csv["scheduled_service"] = full_csv["scheduled_service"].astype(bool)
+    full_csv["last_updated"] = pandas.to_datetime(
+        full_csv["last_updated"], errors="coerce", utc=True
+    )
+
+    full_csv = full_csv.where(pandas.notna(full_csv), None)
+
+    logger.debug("Parsed airport csv data")
+
+    return full_csv
 
 
-def createPilotSession(session, snapshot, pilotSessionRaw, aircrafts):
-    pilotSession = pilotSessionRaw
+def create_new_airports(csv) -> list[Airport]:
+    new_airports = []
+    for row in csv.itertuples(index=False):
+        ident = row.ident
+        elevation_ft = row.elevation_ft
+        elevation_ft = (
+            int(elevation_ft) if pandas.notna(elevation_ft) else None
+        )
+
+        airport = Airport(
+            id=int(row.id),
+            code=ident,
+            ident=ident,
+            type=AirportType(row.type),
+            name=row.name,
+            elevation_ft=elevation_ft,
+            continent=Continent(row.continent),
+            country_name=row.country_name,
+            iso_country=row.iso_country,
+            region_name=row.region_name,
+            iso_region=row.iso_region,
+            local_region=row.local_region,
+            municipality=row.municipality,
+            scheduled_service=bool(row.scheduled_service),
+            gps_code=row.gps_code,
+            icao_code=row.icao_code,
+            iata_code=row.iata_code,
+            local_code=row.local_code,
+            home_link=row.home_link,
+            wikipedia_link=row.wikipedia_link,
+            keywords=row.keywords,
+            score=row.score,
+            last_updated=row.last_updated,
+            geom=f"SRID=4326;POINT({row.longitude_deg} {row.latitude_deg})",
+        )
+
+        new_airports.append(airport)
+        logger.debug("Adding airport %s", ident)
+
+    return new_airports
+
+
+def update_airports(last_updated_csv, session):
+    for row in last_updated_csv.itertuples(index=False):
+        # get existing airport from db
+        airport = session.get(Airport, row.ident)
+        elevation_ft = row.elevation_ft
+        elevation_ft = (
+            int(elevation_ft) if pandas.notna(elevation_ft) else None
+        )
+
+        # update airport
+        airport.id = int(row.id)
+        # do not update/overwrite "code" attribute
+        airport.ident = row.ident
+        airport.type = AirportType(row.type)
+        airport.name = row.name
+        airport.elevation_ft = elevation_ft
+        airport.continent = Continent(row.continent)
+        airport.country_name = row.country_name
+        airport.iso_country = row.iso_country
+        airport.region_name = row.region_name
+        airport.iso_region = row.iso_region
+        airport.local_region = row.local_region
+        airport.municipality = row.municipality
+        airport.scheduled_service = bool(row.scheduled_service)
+        airport.gps_code = row.gps_code
+        airport.icao_code = row.icao_code
+        airport.iata_code = row.iata_code
+        airport.local_code = row.local_code
+        airport.home_link = row.home_link
+        airport.wikipedia_link = row.wikipedia_link
+        airport.keywords = row.keywords
+        airport.score = row.score
+        airport.last_updated = row.last_updated
+        airport.geom = (
+            f"SRID=4326;POINT({row.longitude_deg} {row.latitude_deg})"
+        )
+
+        logger.debug("Updating airport %s", airport.ident)
+        session.merge(airport)
+
+
+def create_pilot_session(
+    session, snapshot, pilot_session_raw, aircrafts
+) -> PilotSession:
+    pilot_session = pilot_session_raw
 
     # handle flightplans
-    for fp in pilotSession.flightplans:
+    for fp in pilot_session.flightplans:
         if fp.aircraft:
             if fp.aircraft.icaoCode:
                 ac = next(
@@ -343,19 +351,19 @@ def createPilotSession(session, snapshot, pilotSessionRaw, aircrafts):
                     )
                     setattr(fp, airport_field, airport)
 
-    session.add(pilotSession)
-    snapshot.pilotSessions.append(pilotSession)
-    logger.debug("Created new pilot session " + pilotSessionRaw.callsign)
-    return pilotSession
+    session.add(pilot_session)
+    snapshot.pilotSessions.append(pilot_session)
+    logger.debug("Created new pilot session " + pilot_session_raw.callsign)
+    return pilot_session
 
 
 def mergePilotSession(
-    session, snapshot, pilotSessionRaw, pilotSession, aircrafts
+    session, snapshot, raw_pilot_session, pilot_session, aircrafts
 ):
-    for fp in pilotSessionRaw.flightplans:
+    for fp in raw_pilot_session.flightplans:
         # handle flightplans
         if not any(
-            sessionFp.id == fp.id for sessionFp in pilotSession.flightplans
+            session_fp.id == fp.id for session_fp in pilot_session.flightplans
         ):
             if fp.aircraft and fp.aircraft.icaoCode:
                 ac = next(
@@ -379,54 +387,54 @@ def mergePilotSession(
                     )
                     setattr(fp, airport_field, airport)
 
-            fp.pilotSession = pilotSession
+            fp.pilotSession = pilot_session
             session.add(fp)
             logger.debug(
-                "Appended a new flightplan for " + pilotSession.callsign
+                "Appended a new flightplan for " + pilot_session.callsign
             )
 
-    lastState = None
-    if len(pilotSession.tracks) > 0:
-        lastTrack = pilotSession.tracks[-1]
-        lastState = lastTrack.state
+    last_state = None
+    if len(pilot_session.tracks) > 0:
+        last_track = pilot_session.tracks[-1]
+        last_state = last_track.state
 
-    if len(pilotSessionRaw.tracks) > 0:
-        newTrack = pilotSessionRaw.tracks[0]
-        newTrack.pilotSession = pilotSession
-        session.add(newTrack)
-        pilotSession.tracks.append(newTrack)
-        newState = newTrack.state
-        if lastState and lastState != newState:
+    if len(raw_pilot_session.tracks) > 0:
+        new_track = raw_pilot_session.tracks[0]
+        new_track.pilotSession = pilot_session
+        session.add(new_track)
+        pilot_session.tracks.append(new_track)
+        new_state = new_track.state
+        if last_state and last_state != new_state:
             if (
-                lastState == State.BOARDING
-                and newState == State.DEPARTING
-                and pilotSession.taxiTime is None
+                last_state == State.BOARDING
+                and new_state == State.DEPARTING
+                and pilot_session.taxiTime is None
             ):
-                pilotSession.taxiTime = newTrack.timestamp
-                logger.debug("%s started to taxi", pilotSession.callsign)
+                pilot_session.taxiTime = new_track.timestamp
+                logger.debug("%s started to taxi", pilot_session.callsign)
             elif (
-                lastState == State.DEPARTING
-                and newState == State.INITIAL_CLIMB
-                and pilotSession.takeoffTime is None
+                last_state == State.DEPARTING
+                and new_state == State.INITIAL_CLIMB
+                and pilot_session.takeoffTime is None
             ):
-                pilotSession.takeoffTime = newTrack.timestamp
-                logger.debug("%s departed", pilotSession.callsign)
-            elif lastState == State.EN_ROUTE and newState == State.APPROACH:
-                pilotSession.approachTime = newTrack.timestamp
-                logger.debug("%s is approaching", pilotSession.callsign)
-            elif lastState == State.APPROACH and newState == State.LANDED:
-                pilotSession.landingTime = newTrack.timestamp
-                logger.debug("%s landed", pilotSession.callsign)
-            elif lastState == State.LANDED and newState == State.ON_BLOCKS:
-                pilotSession.onBlocksTime = newTrack.timestamp
-                logger.debug("%s is on blocks", pilotSession.callsign)
+                pilot_session.takeoffTime = new_track.timestamp
+                logger.debug("%s departed", pilot_session.callsign)
+            elif last_state == State.EN_ROUTE and new_state == State.APPROACH:
+                pilot_session.approachTime = new_track.timestamp
+                logger.debug("%s is approaching", pilot_session.callsign)
+            elif last_state == State.APPROACH and new_state == State.LANDED:
+                pilot_session.landingTime = new_track.timestamp
+                logger.debug("%s landed", pilot_session.callsign)
+            elif last_state == State.LANDED and new_state == State.ON_BLOCKS:
+                pilot_session.onBlocksTime = new_track.timestamp
+                logger.debug("%s is on blocks", pilot_session.callsign)
 
-    pilotSession.textureId = pilotSessionRaw.textureId
-    snapshot.pilotSessions.append(pilotSession)
-    session.merge(pilotSession)
+    pilot_session.textureId = raw_pilot_session.textureId
+    snapshot.pilotSessions.append(pilot_session)
+    session.merge(pilot_session)
 
 
-def create_or_find_and_update_airport(airport_id, session):
+def create_or_find_and_update_airport(airport_id, session) -> Airport:
     # try to find existing airport in db by pk "code" attribute
     airport = session.get(Airport, airport_id)
 
@@ -438,7 +446,7 @@ def create_or_find_and_update_airport(airport_id, session):
 
         if airport:
             airport.code = airport_id
-            logger.debug(
+            logger.info(
                 "Found correct airport value %s in 'gps_code'",
                 airport.gps_code,
             )
@@ -452,7 +460,7 @@ def create_or_find_and_update_airport(airport_id, session):
 
         if airport:
             airport.code = airport_id
-            logger.debug(
+            logger.info(
                 "Found correct airport value %s in 'local_code'",
                 airport.local_code,
             )
@@ -460,19 +468,12 @@ def create_or_find_and_update_airport(airport_id, session):
 
     # known special cases
     if airport is None:
-        airport_fix_map = {
-            "SVPQ": "SVTP",
-            "X21": "KX21",
-            "SSUB": "SDLF",
-            "VHHX": "HK-0099",
-        }
-
         if airport_id in airport_fix_map:
             wrong_airport_id = airport_fix_map[airport_id]
             airport = session.get(Airport, wrong_airport_id)
             if airport:
                 airport.code = airport_id
-                logger.debug(
+                logger.info(
                     "Replacing '%s' with '%s' via custom airport mapping",
                     wrong_airport_id,
                     airport_id,
@@ -490,7 +491,7 @@ def create_or_find_and_update_airport(airport_id, session):
                 if airport:
                     if airport_id_is_in_keywords(airport_id, airport.keywords):
                         airport.code = airport_id
-                        logger.debug(
+                        logger.info(
                             "Found correct airport value %s in 'keywords'",
                             airport.keywords,
                         )

@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from timeit import default_timer as timer  # pragma: no cover
 
 from sqlmodel import Session, SQLModel, create_engine, text
@@ -36,6 +36,15 @@ def create_schema():
     end = timer()
     duration = end - start
     logger.info("Processed DB Schema in {:.2f}s".format(duration))
+
+
+def ensure_db_partitions():
+    today = datetime.now(UTC)
+    yesterday = today - timedelta(days=1)
+
+    for date in [yesterday, today]:
+        if not pilottrack_partitions_exist(engine, date):
+            create_pilottrack_partitions(engine, date)
 
 
 def pilottrack_partitions_exist(engine, day: datetime) -> bool:

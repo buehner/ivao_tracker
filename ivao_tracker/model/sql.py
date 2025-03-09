@@ -1,9 +1,8 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, List, Optional
 
 from geoalchemy2 import Geometry
 
-# from sqlalchemy import Integer
 from sqlalchemy.dialects.postgresql import TIMESTAMP
 from sqlalchemy.orm import RelationshipProperty
 from sqlmodel import (

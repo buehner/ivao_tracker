@@ -14,7 +14,7 @@ setup_logging()
 logger = logging.getLogger(__name__)
 
 
-def json2sqlSnapshot(jsonSnapshot):
+def json_to_sql_snapshot(jsonSnapshot):
     stats = jsonSnapshot.connections
     snapshot = Snapshot(
         updatedAt=jsonSnapshot.updatedAt,

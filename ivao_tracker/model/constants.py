@@ -1,16 +1,6 @@
 from enum import Enum
 
 
-class State(Enum):
-    BOARDING = "Boarding"
-    DEPARTING = "Departing"
-    INITIAL_CLIMB = "Initial Climb"
-    EN_ROUTE = "En Route"
-    APPROACH = "Approach"
-    LANDED = "Landed"
-    ON_BLOCKS = "On Blocks"
-
-
 class TransponderMode(Enum):
     N = "N"
     S = "S"
@@ -44,6 +34,16 @@ class AirportType(Enum):
     CLOSED = "closed"
 
 
+class State(Enum):
+    BOARDING = "Boarding"
+    DEPARTING = "Departing"
+    INITIAL_CLIMB = "Initial Climb"
+    EN_ROUTE = "En Route"
+    APPROACH = "Approach"
+    LANDED = "Landed"
+    ON_BLOCKS = "On Blocks"
+
+
 airport_field_map = {
     "departureId": "departure",
     "arrivalId": "arrival",
@@ -72,3 +72,11 @@ pandas_na_values = [
     "None",
     "",
 ]
+
+
+airport_fix_map = {
+    "SVPQ": "SVTP",
+    "X21": "KX21",
+    "SSUB": "SDLF",
+    "VHHX": "HK-0099",
+}
