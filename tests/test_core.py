@@ -2,7 +2,7 @@ import datetime
 import unittest
 import json
 from unittest.mock import patch
-from ivao_tracker import base
+from ivao_tracker.service import ivao
 
 
 class TestIvaoTracker(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestIvaoTracker(unittest.TestCase):
         self.expectedAircraftId = "B77W"
         self.expectedAltitude = 35076
 
-    @patch.object(base, "urlopen", autospec=True)
+    @patch.object(ivao, "urlopen", autospec=True)
     def test_read_ivao_snapshot(self, mock_urlopen):
 
         # mock the result of urlopen(...).read()
@@ -28,7 +28,7 @@ class TestIvaoTracker(unittest.TestCase):
         )
 
         # call the function to test
-        snapshot = base.read_ivao_snapshot()
+        snapshot = ivao.read_ivao_snapshot()
 
         assert abs(
             self.expected_updatedAt - snapshot.updatedAt

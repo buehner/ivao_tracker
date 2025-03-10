@@ -1,6 +1,6 @@
 import logging
 from datetime import UTC, datetime, timedelta
-from timeit import default_timer as timer  # pragma: no cover
+from timeit import default_timer as timer
 
 from sqlmodel import Session, SQLModel, create_engine, text
 
