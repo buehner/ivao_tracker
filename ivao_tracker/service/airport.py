@@ -19,7 +19,7 @@ from ivao_tracker.model.constants import (
     pandas_na_values,
 )
 from ivao_tracker.model.sql import Airport
-from ivao_tracker.sql import engine
+from ivao_tracker.service.sql import engine
 
 setup_logging()
 logger = logging.getLogger(__name__)

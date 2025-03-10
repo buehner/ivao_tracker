@@ -13,7 +13,7 @@ from ivao_tracker.model.constants import State, airport_field_map
 from ivao_tracker.model.json import JsonSnapshot
 from ivao_tracker.model.sql import Aircraft, PilotSession
 from ivao_tracker.service.airport import create_or_find_and_update_airport
-from ivao_tracker.sql import engine, ensure_db_partitions
+from ivao_tracker.service.sql import engine, ensure_db_partitions
 from ivao_tracker.util.model import json2sqlPilotSession, json_to_sql_snapshot
 
 setup_logging()

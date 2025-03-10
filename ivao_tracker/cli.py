@@ -12,7 +12,7 @@ from ivao_tracker.core import (
     sync_airports,
     track_snapshots,
 )
-from ivao_tracker.sql import create_schema
+from ivao_tracker.service.sql import create_schema
 
 setup_logging()
 logger = logging.getLogger(__name__)
