@@ -84,6 +84,7 @@ pandas_na_values = [
 
 
 airport_fix_map = {
+    "EG22": "GB-0367",
     "LKOZ": "CZ-0019",
     "MMIC": "MM81",
     "SSUB": "SDLF",

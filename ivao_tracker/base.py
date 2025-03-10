@@ -287,14 +287,21 @@ def create_new_airports(csv) -> list[Airport]:
 def update_airports(last_updated_csv, session):
     for row in last_updated_csv.itertuples(index=False):
         # get existing airport from db
-        airport = session.get(Airport, row.ident)
+        id = int(row.id)
+        airport = session.exec(
+            select(Airport).where(Airport.id is not None and Airport.id == id)
+        ).first()
         elevation_ft = row.elevation_ft
         elevation_ft = (
             int(elevation_ft) if pandas.notna(elevation_ft) else None
         )
 
+        if airport is None:
+            logger.error("Could not find airport with id %d", id)
+            # import pdb
+            # pdb.set_trace()
+
         # update airport
-        airport.id = int(row.id)
         # do not update/overwrite "code" attribute
         airport.ident = row.ident
         airport.type = AirportType(row.type)
@@ -502,7 +509,6 @@ def create_or_find_and_update_airport(airport_id, session) -> Airport:
                     airport.fix_origin = FixOrigin.CUSTOM_MAPPING
                     logger.info(
                         "Found airport value %s in 'custom_mapping'",
-                        wrong_airport_id,
                         airport_id,
                     )
                 elif airport.code != airport_id:

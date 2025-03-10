@@ -60,7 +60,7 @@ class Airport(SQLModel, table=True):
     wikipedia_link: str | None
     score: int | None
     last_updated: datetime | None
-    id: Optional[int]
+    id: Optional[int] = Field(index=True)
     is_fixed: bool = Field(default=False, index=True)
     fix_origin: FixOrigin = Field(
         default=FixOrigin.DEFAULT,
