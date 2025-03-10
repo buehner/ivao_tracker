@@ -1,6 +1,6 @@
 [airports]
 url = "https://ourairports.com/airports.csv"
-interval = 43200
+interval = 3600
 
 [ivao]
 whazzup_url = "https://api.ivao.aero/v2/tracker/whazzup"
