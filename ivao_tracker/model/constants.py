@@ -85,7 +85,10 @@ pandas_na_values = [
 
 airport_fix_map = {
     "EG22": "GB-0367",
+    "EHMM": "NL-0024",
+    "LEGH": "ES-0366",
     "LKOZ": "CZ-0019",
+    "LOXL": "LOWL",
     "MMIC": "MM81",
     "SSUB": "SDLF",
     "SVID": "SVDM",
@@ -93,3 +96,8 @@ airport_fix_map = {
     "SVPQ": "SVTP",
     "VHHX": "HK-0099",
 }
+
+correct_airport_codes = [
+    "LEPA",
+    "LOWL"
+]

@@ -61,6 +61,7 @@ class Airport(SQLModel, table=True):
     score: int | None
     last_updated: datetime | None
     id: Optional[int] = Field(index=True)
+    is_used: bool = Field(default=False, index=True)
     is_fixed: bool = Field(default=False, index=True)
     fix_origin: FixOrigin = Field(
         default=FixOrigin.DEFAULT,

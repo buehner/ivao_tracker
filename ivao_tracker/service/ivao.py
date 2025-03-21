@@ -12,7 +12,7 @@ from ivao_tracker.config.logging import setup_logging
 from ivao_tracker.model.constants import State, airport_field_map
 from ivao_tracker.model.json import JsonSnapshot
 from ivao_tracker.model.sql import Aircraft, PilotSession
-from ivao_tracker.service.airport import create_or_find_and_update_airport
+from ivao_tracker.service.airport import create_or_find_and_update_airport, known_airports
 from ivao_tracker.service.sql import engine, ensure_db_partitions
 from ivao_tracker.util.model import json2sqlPilotSession, json_to_sql_snapshot
 
@@ -93,6 +93,7 @@ def import_ivao_snapshot():
                                 "Revived pilot session %s", pilot_session.id
                             )
 
+                    known_airports = {}
                     if pilot_session is None:
                         # no pilotSession in db...
                         pilot_session = create_pilot_session(
